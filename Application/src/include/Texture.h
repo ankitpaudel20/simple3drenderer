@@ -7,6 +7,7 @@
 #include "core.h"
 
 std::vector<uint32_t> activeTextures;
+
 class Texture {
 private:
 	std::string m_filepath;
@@ -31,9 +32,8 @@ private:
 
 		GLcall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_LocalBuffer));
 		GLcall(glGenerateMipmap(GL_TEXTURE_2D));
-		this->Unbind();
+		Texture::Unbind();
 		stbi_image_free(m_LocalBuffer);
-		GLcall(glBindTexture(GL_TEXTURE_2D, 0));
 	}
 
     void createTexture() {
@@ -68,8 +68,8 @@ public:
 	Texture(std::string  path) :m_filepath(std::move(path)){
 	    createTexture();
 		GLcall(glBindTexture(GL_TEXTURE_2D, ID));
-
 		LoadFromFile();
+        GLcall(glBindTexture(GL_TEXTURE_2D, 0));
 	}
 
 	Texture(const Texture& in) = default;
@@ -92,10 +92,10 @@ public:
         if (ID) {
             printf("ERROR::already active texture tried to replace.\n");
             DEBUG_BREAK;
+            deleteTexture();
         }
         ID=in.ID;
-        deleteTexture();
-		m_filepath = std::move(in.m_filepath);
+        m_filepath = std::move(in.m_filepath);
 		in.ID = 0;
 	}
 

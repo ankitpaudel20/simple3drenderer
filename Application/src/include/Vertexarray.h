@@ -5,6 +5,8 @@
 #include "buffer.h"
 
 std::vector<uint32_t> activeVAO;
+class Vertexarray;
+
 
 class Vertexarray {
 private:
@@ -39,11 +41,11 @@ private:
     }
 
     static void createarray(unsigned &id) {
-        glGenVertexArrays(1,&id);
+        glGenVertexArrays(1, &id);
         list->push_back(id);
     }
 
-    static void deletearray(unsigned &id) {
+    static void deletearray(uint32_t &id) {
         if (id) {
             glDeleteVertexArrays(1, &id);
             auto place = std::find(list->begin(), list->end(), id);
@@ -55,7 +57,7 @@ private:
                 DEBUG_BREAK;
             }
 
-            id=0;
+            id = 0;
         }
     }
 
@@ -63,14 +65,12 @@ public:
 
 
     Vertexarray() {
-        list=&activeVAO;
+        list = &activeVAO;
     }
 
-    Vertexarray(buffer<Vertex, GL_ARRAY_BUFFER> &vbo, buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER> &ibo) {
-                list=&activeVAO;
-        this->init();
-        this->addBuffer(vbo, ibo);
-    }
+
+    Vertexarray(buffer<Vertex, GL_ARRAY_BUFFER> &vbo, buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER> &ibo);
+
 
     void init() {
         deletearray(m_arrayID);
@@ -86,9 +86,22 @@ public:
     void addBuffer(const buffer<T, GL_ARRAY_BUFFER> &vbo, const buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER> &ibo) {
         assert(false);
     }
-    template <>
-    void addBuffer<Vertex>(const buffer<Vertex, GL_ARRAY_BUFFER> &vbo, const buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER> &ibo);
 
+
+
+//    template <>
+//    void addBuffer<Vertex>(const buffer<Vertex, GL_ARRAY_BUFFER> &vbo, const buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER> &ibo){
+//        m_layout.push<float>(3, GL_FALSE);
+//        m_layout.push<float>(4, GL_FALSE);
+//        m_layout.push<float>(3, GL_FALSE);
+//        m_layout.push<float>(2, GL_FALSE);
+//        m_layout.push<float>(1, GL_FALSE);
+//        m_AddBuffer(vbo.id, ibo.id);
+//    }
+
+
+#ifdef _MSC_VER
+#endif
 
     void AddBufferf(const buffer<float, GL_ARRAY_BUFFER> &vb, const VertexBufferLayout &layout) {
         Bind();
@@ -153,9 +166,10 @@ public:
     }
 };
 
+
 template<>
-inline void Vertexarray::addBuffer<Vertex>(const buffer<Vertex, GL_ARRAY_BUFFER> &vbo,
-                                           const buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER> &ibo) {
+void Vertexarray::addBuffer<Vertex>(const buffer<Vertex, GL_ARRAY_BUFFER> &vbo,
+                                    const buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER> &ibo) {
     m_layout.push<float>(3, GL_FALSE);
     m_layout.push<float>(4, GL_FALSE);
     m_layout.push<float>(3, GL_FALSE);
@@ -164,3 +178,9 @@ inline void Vertexarray::addBuffer<Vertex>(const buffer<Vertex, GL_ARRAY_BUFFER>
     m_AddBuffer(vbo.id, ibo.id);
 }
 
+Vertexarray::Vertexarray(buffer<Vertex, 0x8892> &vbo, buffer<uint32_t, 0x8893> &ibo) {
+    this->init();
+    this->addBuffer<Vertex>(vbo, ibo);
+}
+
+std::vector<uint32_t>* Vertexarray::list = &activeVAO;

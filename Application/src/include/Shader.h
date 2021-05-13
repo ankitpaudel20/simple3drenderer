@@ -250,10 +250,14 @@ public:
 		GLcall(glUniform1i(GetUniformLocation(name), value));
 	}
 	
-	Shader(const std::string& path) : m_programID(0), m_path(path)
+	Shader(const std::string& path,bool different=false) : m_programID(0), m_path(path)
 	{
-		setshader(path);
-		m_programID = CreateShader();
+        if (!different) {
+            setshader(path);
+            m_programID = CreateShader();
+        }else{
+            Shader(path+".vert",path+".frag");
+        }
 	}
 	
 	Shader(const std::string& vert, const std::string& frag) : m_path(vert), m_programID(0)

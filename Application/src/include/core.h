@@ -361,4 +361,7 @@ struct dirLight
 	dirLight(const vec3 &dir, const float &intensity, const vec3 &diffcol = 1, const vec3 &speccol = 1) : direction(dir), diffusecolor(diffcol), specularcolor(speccol), intensity(intensity) {}
 };
 
+enum class ShaderType{
+    NORMAL_SHADER
+};
 

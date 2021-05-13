@@ -47,7 +47,7 @@ public:
     void Draw() {
         auto view = glm::lookAt(currentScene->cam.Camera_Position, currentScene->cam.Camera_Position + currentScene->cam.Camera_Facing_Direction * currentScene->cam.Camera_Target_distance, currentScene->cam.Camera_Up);
 
-        auto projpersp = glm::perspective(glm::radians(perspective_fov), aspect_ratio, near_point, far_point);
+        auto projpersp = glm::perspective(glm::radians(currentScene->cam.FOV), aspect_ratio, currentScene->cam.nearPoint, currentScene->cam.farPoint);
 
         for (auto &entity:entities) {
             entity.vao.Bind();

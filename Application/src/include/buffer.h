@@ -36,7 +36,7 @@ private:
 
 public:
 
-    unsigned id = 0;
+    uint32_t id = 0;
     uint32_t m_count;
 
 
@@ -79,7 +79,7 @@ public:
             printf("ERROR::already active %s buffer tried to replace.", TYPE == GL_ARRAY_BUFFER ? "vertex" : "index");
             DEBUG_BREAK;
         }
-        id = in.id();
+        id = in.id;
         m_count = in.m_count;
         list = in.list;
     }
@@ -99,7 +99,7 @@ public:
             printf("ERROR::already active %s buffer tried to replace.\n", TYPE == GL_ARRAY_BUFFER ? "vertex" : "index");
             DEBUG_BREAK;
         }
-        id = in.id();
+        id = in.id;
         in.id=0;
         m_count = in.m_count;
         list = in.list;

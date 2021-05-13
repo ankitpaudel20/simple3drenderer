@@ -8,6 +8,7 @@
 #include "core.h"
 #include "drawable.h"
 #include "camera.h"
+#include "model.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -29,23 +30,20 @@ struct scene{
     drawable<Vertex> lightCube;
 
     camera cam;
+    double deltatime = 0;
+
+    scene(){
+//        nodes.emplace_back(node());
+    }
 
     void loadModel(const std::string &modelPath,const std::string shaderPath){
-        // read file via ASSIMP
-        Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-        // check for errors
-        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
-        {
-            std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
-            return;
-        }
-        // retrieve the directory path of the filepath
-        directory = path.substr(0, path.find_last_of('/'));
-
-        // process ASSIMP's root node recursively
-        processNode(scene->mRootNode, scene);
+        node temp;
+        temp.meshes=Model::loadModel(modelPath);
+        Shader s(shaderPath,true);
+        nodes.emplace_back(temp);
     }
+
+
 };
 
 #endif //OPENGL_CORE_SCENE_H

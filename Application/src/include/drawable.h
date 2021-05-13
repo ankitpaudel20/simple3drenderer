@@ -85,7 +85,7 @@ struct drawable
 			for (size_t j = 0; j < index.primitive.size(); j++)
 			{
 				int pos_index = index.primitive[j];
-				T v1(positions[pos_index], index.color, vec3(0), index.texCoord[j], index.tex_id);
+				T v1(positions[pos_index],  vec3(0));
 				m_vertices.push_back(v1);
 			}
 		}

@@ -113,11 +113,19 @@ int main(int argc, char* argv[])
 
     {
         std::string resPath = searchRes();
-        Shader lampShader(resPath + "/shaders/lamp.vert", resPath + "/shaders/lamp.frag");
-        Shader cubeShader(resPath + "/shaders/cube_final.vert", resPath + "/shaders/cube_final.frag");
-        Shader cubeShader2(resPath + "/shaders/cube_final2.vert", resPath + "/shaders/cube_final2.frag");
-        skyBox skybox(resPath+pathDelemeter+"skybox", resPath + pathDelemeter + "shaders");
+//        Shader lampShader(resPath + "/shaders/lamp.vert", resPath + "/shaders/lamp.frag");
+//        Shader cubeShader(resPath + "/shaders/cube_final.vert", resPath + "/shaders/cube_final.frag");
+//        Shader cubeShader2(resPath + "/shaders/cube_final2.vert", resPath + "/shaders/cube_final2.frag");
+//        skyBox skybox(resPath+pathDelemeter+"skybox", resPath + pathDelemeter + "shaders");
 
+        scene mainScene;
+        glfwSetWindowUserPointer(mainWin,&mainScene);
+        mainScene.pointLights.emplace_back(vec3(1),1);
+        mainScene.loadModel(resPath+"/3dModels/nanosuit/nanosuit.obj",resPath+"/shaders/cube_final2");
+
+        renderer mainRend;
+        mainRend.currentScene=&mainScene;
+        mainRend.init();
 
 #pragma region setup matrices and vectors for camera
 
@@ -157,10 +165,9 @@ int main(int argc, char* argv[])
         {
             glfwMakeContextCurrent(mainWin);
             glfwPollEvents();
-            deltatime = glfwGetTime() - LastFrame;
+             mainScene.deltatime= glfwGetTime() - LastFrame;
             LastFrame = glfwGetTime();
 
-            processInput(mainWin);
 
             GLcall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -178,11 +185,12 @@ int main(int argc, char* argv[])
 
             model = translation * rotation * scaling;
 
-            view = glm::lookAt(cam.Camera_Position, cam.Camera_Position + cam.Camera_Facing_Direction * cam.Camera_Target_distance, cam.Camera_Up);
+            view = glm::lookAt(mainScene.cam.Camera_Position, mainScene.cam.Camera_Position + mainScene.cam.Camera_Facing_Direction * mainScene.cam.Camera_Target_distance, mainScene.cam.Camera_Up);
 
-            projpersp = glm::perspective(glm::radians(perspective_fov), aspect_ratio, near_point, far_point);
+            projpersp = glm::perspective(glm::radians(mainScene.cam.FOV), aspect_ratio, near_point, far_point);
 
-            //TODO: drawing here
+
+            mainRend.Draw();
 
             glfwSwapBuffers(mainWin);
 
@@ -206,19 +214,18 @@ int main(int argc, char* argv[])
                     ImGui::SliderFloat3("rotate", &rotate.x, -180.0f, 180.0f);
                     //ImGui::SliderFloat3("color", &lightColor.x, 0.0f, 1.0f);
                     //ImGui::SliderFloat("near point", &near_point, 0.0f, 5.0f);
-                    ImGui::SliderFloat3("pointLight color ambient", &AmbientLight.x, 0.0f, 1.0f);
-                    ImGui::SliderFloat3("pointLight color diffused", &pointLights[selected_light].diffusecolor.x, 0.0f, 1.0f);
-                    ImGui::SliderFloat3("pointLight color specular", &pointLights[selected_light].specularcolor.x, 0.0f, 1.0f);
-                    ImGui::Text("selected Lamp :%d", selected_light);
-                    ImGui::Text("position of light is %.3f %.3f %.3f", pointLights[selected_light].position.x, pointLights[selected_light].position.y, pointLights[selected_light].position.z);
+                    ImGui::SliderFloat3("pointLight color ambient", &mainScene.ambientLight.x, 0.0f, 1.0f);
+                    ImGui::SliderFloat3("pointLight color diffused", &mainScene.pointLights[selected_light].diffusecolor.x, 0.0f, 1.0f);
+                    ImGui::SliderFloat3("pointLight color specular", &mainScene.pointLights[selected_light].specularcolor.x, 0.0f, 1.0f);
+                    ImGui::Text("position of light is %.3f %.3f %.3f", mainScene.pointLights[selected_light].position.x, mainScene.pointLights[selected_light].position.y, mainScene.pointLights[selected_light].position.z);
                     //ImGui::SliderFloat3("rotate", &light.direction.x, 0.0f, 1.0f);
                     //ImGui::SliderFloat3("Specular Reflectivity", &material.specular.x, 0.0f, 1.0f);
-                    ImGui::SliderFloat("liear term", &pointLights[selected_light].linear, 0.001f, 0.7f);
-                    ImGui::SliderFloat("quadratic term", &pointLights[selected_light].quadratic, 0.000007f, 1.8f);
+                    ImGui::SliderFloat("liear term", &mainScene.pointLights[selected_light].linear, 0.001f, 0.7f);
+                    ImGui::SliderFloat("quadratic term", &mainScene.pointLights[selected_light].quadratic, 0.000007f, 1.8f);
                     //ImGui::SliderFloat("Shineness", &material.shininess, 0.0f, 512.0f);
 
                     ImGui::SliderFloat("far point", &far_point, 0.0f, 200.0f);
-                    ImGui::SliderFloat("POV", &perspective_fov, 0.0f, 180.0f);
+                    ImGui::SliderFloat("POV", &mainScene.cam.FOV, 0.0f, 180.0f);
                     ImGui::End();
 
                     ImGui::Begin("Information");
@@ -226,30 +233,12 @@ int main(int argc, char* argv[])
                     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
                     ImGui::Text("aspect Ratio : %f", aspect_ratio);
-                    ImGui::Text("value of facing vector is %.3f %.3f %.3f", cam.Camera_Facing_Direction.x, cam.Camera_Facing_Direction.y, cam.Camera_Facing_Direction.z);
-                    ImGui::Text("value of pitch = %.3f yaw = %.3f roll = %.3f", glm::degrees(cam.getAngles().m_pitch), glm::degrees(cam.getAngles().m_yaw), glm::degrees(cam.getAngles().m_roll));
-                    ImGui::Text("value of up vector is %.3f %.3f %.3f", cam.Camera_Up.x, cam.Camera_Up.y, cam.Camera_Up.z);
+                    ImGui::Text("value of facing vector is %.3f %.3f %.3f", mainScene.cam.Camera_Facing_Direction.x, mainScene.cam.Camera_Facing_Direction.y, mainScene.cam.Camera_Facing_Direction.z);
+                    ImGui::Text("value of pitch = %.3f yaw = %.3f roll = %.3f", glm::degrees(mainScene.cam.getAngles().m_pitch), glm::degrees(mainScene.cam.getAngles().m_yaw), glm::degrees(mainScene.cam.getAngles().m_roll));
+                    ImGui::Text("value of up vector is %.3f %.3f %.3f", mainScene.cam.Camera_Up.x, mainScene.cam.Camera_Up.y, mainScene.cam.Camera_Up.z);
                     ImGui::Text("glrenderer %s", glrenderer);
                     ImGui::Text("glversion %s", glversion);
                     ImGui::Text("glvendor %s", glvendor);
-
-                    // ImGui::Text("( %.3f ,%.3f, %.3f, %.3f )\n( %.3f ,%.3f, %.3f, %.3f )\n( %.3f, %.3f, %.3f, %.3f )\n( %.3f, %.3f, %.3f, %.3f )",
-                    // 	model[0][0], model[0][1], model[0][2], model[0][3],
-                    // 	model[1][0], model[1][1], model[1][2], model[1][3],
-                    // 	model[2][0], model[2][1], model[2][2], model[2][3],
-                    // 	model[3][0], model[3][1], model[3][2], model[3][3]);
-                    // ImGui::Text("View matrix: ");
-                    // ImGui::Text("( %.3f ,%.3f, %.3f, %.3f )\n( %.3f ,%.3f, %.3f, %.3f )\n( %.3f, %.3f, %.3f, %.3f )\n( %.3f, %.3f, %.3f, %.3f )",
-                    // 	view[0][0], view[0][1], view[0][2], view[0][3],
-                    // 	view[1][0], view[1][1], view[1][2], view[1][3],
-                    // 	view[2][0], view[2][1], view[2][2], view[2][3],
-                    // 	view[3][0], view[3][1], view[3][2], view[3][3]);
-                    // ImGui::Text("Projection matrix: ");
-                    // ImGui::Text("( %.3f ,%.3f, %.3f, %.3f )\n( %.3f ,%.3f, %.3f, %.3f )\n( %.3f, %.3f, %.3f, %.3f )\n( %.3f, %.3f, %.3f, %.3f )",
-                    // 	projpersp[0][0], projpersp[0][1], projpersp[0][2], projpersp[0][3],
-                    // 	projpersp[1][0], projpersp[1][1], projpersp[1][2], projpersp[1][3],
-                    // 	projpersp[2][0], projpersp[2][1], projpersp[2][2], projpersp[2][3],
-                    // 	projpersp[3][0], projpersp[3][1], projpersp[3][2], projpersp[3][3]);
 
                     ImGui::Text("cursor pos: %f , %f", mx, my);
                     ImGui::Text("captured: %d", captured);
