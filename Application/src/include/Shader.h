@@ -232,7 +232,7 @@ private:
 	}
 	
 public:
-    unsigned id;
+    unsigned id=0;
 
 	int GetUniformLocation(const char* name)
 	{
@@ -251,8 +251,10 @@ public:
 	{
 		GLcall(glUniform1i(GetUniformLocation(name), value));
 	}
-	
-	Shader(const std::string& path,bool different=false) : id(0), m_path(path)
+
+	Shader()= default;
+
+	explicit Shader(const std::string& path,bool different=false) : id(0), m_path(path)
 	{
         if (!different) {
             setshader(path);

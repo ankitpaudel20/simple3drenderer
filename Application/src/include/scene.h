@@ -17,8 +17,10 @@
 #include <assimp/postprocess.h>
 
 struct node{
-std::vector<node> children;
-std::vector<drawable<Vertex>> meshes;
+    node* children=nullptr;
+    uint32_t nosChildren=0;
+    //std::vector<node> children;
+    std::vector<drawable<Vertex>> meshes;
 };
 
 struct scene{
@@ -36,11 +38,13 @@ struct scene{
 //        nodes.emplace_back(node());
     }
 
-    void loadModel(const std::string &modelPath,const std::string shaderPath){
+    void loadModel(const std::string &modelPath,const std::string& shaderName){
         node temp;
         temp.meshes=Model::loadModel(modelPath);
-        Shader s(shaderPath,true);
-        nodes.emplace_back(temp);
+        for (auto &i:temp.meshes) {
+            i.shader=shaderName;
+        }
+        nodes.push_back(temp);
     }
 
 

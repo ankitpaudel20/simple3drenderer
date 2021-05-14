@@ -8,7 +8,7 @@
 std::vector<uint32_t> activeVBO;
 std::vector<uint32_t> activeIBO;
 
-template<class T, uint32_t TYPE>
+template<class T, int TYPE>
 struct buffer {
 private:
     std::vector<uint32_t> *list;
@@ -90,14 +90,16 @@ public:
             printf("ERROR::already active %s buffer tried to replace.", TYPE == GL_ARRAY_BUFFER ? "vertex" : "index");
             DEBUG_BREAK;
         }
-        id = in.id();
+        id = in.id;
         m_count = in.m_count;
         list = in.list;
     }
 
     buffer& operator =(buffer &&in){
         if (id) {
-            printf("ERROR::already active %s buffer tried to replace.\n", TYPE == GL_ARRAY_BUFFER ? "vertex" : "index");
+            std::string temp = TYPE == GL_ARRAY_BUFFER ? "vertex" : "index";
+            std::cout << "ERROR::already active " << temp << " buffer tried to replace.\n";
+            //printf("ERROR::already active %s buffer tried to replace.\n", TYPE == GL_ARRAY_BUFFER ? "vertex" : "index");
             DEBUG_BREAK;
         }
         id = in.id;
@@ -108,7 +110,7 @@ public:
     }
 
     buffer(buffer &&in)  noexcept {
-        id = in.id();
+        id = in.id;
         in.id=0;
         m_count = in.m_count;
         list = in.list;

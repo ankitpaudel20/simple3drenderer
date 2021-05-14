@@ -1,6 +1,4 @@
 
-#include <memory>
-#include <chrono>
 #include <random>
 
 #include "callback.h"
@@ -121,7 +119,7 @@ int main(int argc, char* argv[])
         scene mainScene;
         glfwSetWindowUserPointer(mainWin,&mainScene);
         mainScene.pointLights.emplace_back(vec3(1),1);
-        mainScene.loadModel(resPath+"/3dModels/nanosuit/nanosuit.obj",resPath+"/shaders/cube_final2");
+        mainScene.loadModel(resPath+"/3dModels/nanosuit/nanosuit.obj","cube_final2");
 
         renderer mainRend;
         mainRend.currentScene=&mainScene;

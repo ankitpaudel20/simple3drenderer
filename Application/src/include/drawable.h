@@ -5,7 +5,6 @@
 #include "core.h"
 #include "Vertexarray.h"
 #include "buffer.h"
-#include "Texture.h"
 #include "Shader.h"
 #include "material.h"
 
