@@ -27,7 +27,8 @@ struct drawable
 	std::vector<uint32_t> m_indices;
 	uint32_t m_primitve = GL_TRIANGLES;
 	Material material;
-	Shader* shader=nullptr;
+    std::string shader;
+
 
 	glm::mat4 scaling = glm::mat4(1.0);
 	glm::mat4 translation = glm::mat4(1.0);
@@ -36,7 +37,7 @@ struct drawable
 	
 	drawable() = default;
 
-	drawable(const std::vector<T> &vertices, std::vector<unsigned> indices, std::vector<Texture> tex = std::vector<Texture>()) : m_vertices(vertices), m_indices(std::move(indices))
+	drawable(const std::vector<T> &vertices, std::vector<unsigned> indices, std::vector<std::string> tex) : m_vertices(vertices), m_indices(std::move(indices))
 	{
 	    material.diffuseMap=tex[0];
         material.specularMap=tex[1];
@@ -44,7 +45,7 @@ struct drawable
         material.heightMap=tex[3];
 	}
 
-	drawable(const std::vector<vec3> &positions, const std::vector<Indexdata> &indices,Shader* inshader= nullptr):shader(inshader)
+	drawable(const std::vector<vec3> &positions, const std::vector<Indexdata> &indices,std::string shaderPath):shader(std::move(shaderPath))
 	{
 
 		uint totalindexcount = 0;

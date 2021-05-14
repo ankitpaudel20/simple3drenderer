@@ -13,8 +13,8 @@ private:
 	std::string m_path;
 	std::string m_vertpath;
 	std::string m_fragpath;
-	unsigned m_programID;
 	std::unordered_map<std::string, int> m_UniformLocationCache;
+
 
 
 	static void getstring(const std::string& path, std::string& buffer)
@@ -232,12 +232,14 @@ private:
 	}
 	
 public:
+    unsigned id;
+
 	int GetUniformLocation(const char* name)
 	{
 		if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
 			return m_UniformLocationCache[name];
 
-		GLcall(int location = glGetUniformLocation(m_programID, name));
+		GLcall(int location = glGetUniformLocation(id, name));
 		if (location == -1)
 			std::cout << "Warning: uniform " << name << " does not exist !" << std::endl;
 
@@ -250,26 +252,26 @@ public:
 		GLcall(glUniform1i(GetUniformLocation(name), value));
 	}
 	
-	Shader(const std::string& path,bool different=false) : m_programID(0), m_path(path)
+	Shader(const std::string& path,bool different=false) : id(0), m_path(path)
 	{
         if (!different) {
             setshader(path);
-            m_programID = CreateShader();
+            id = CreateShader();
         }else{
             Shader(path+".vert",path+".frag");
         }
 	}
 	
-	Shader(const std::string& vert, const std::string& frag) : m_path(vert), m_programID(0)
+	Shader(const std::string& vert, const std::string& frag) : m_path(vert), id(0)
 	{
 		setshader2(vert, frag);
-		m_programID = CreateShader();
+        id = CreateShader();
 	}
 	
 	Shader(Shader&& in) noexcept
 	{
-		m_programID = in.m_programID;
-		in.m_programID = 0;
+        id = in.id;
+		in.id = 0;
 		m_UniformLocationCache = std::move(in.m_UniformLocationCache);
 		m_vertex = std::move(in.m_vertex);
 		m_fragment = std::move(in.m_fragment);
@@ -277,16 +279,28 @@ public:
 		m_vertpath = std::move(in.m_vertpath);
 		m_fragpath = std::move(in.m_fragpath);
 	}
+
+	Shader& operator=(Shader &&in) noexcept {
+        id = in.id;
+        in.id = 0;
+        m_UniformLocationCache = std::move(in.m_UniformLocationCache);
+        m_vertex = std::move(in.m_vertex);
+        m_fragment = std::move(in.m_fragment);
+        m_path = std::move(in.m_path);
+        m_vertpath = std::move(in.m_vertpath);
+        m_fragpath = std::move(in.m_fragpath);
+        return *this;
+	}
 	
-	~Shader()
+	void free()
 	{
 		// std::cout << "shader deleted\n";
 		GLcall(glUseProgram(0));
-		GLcall(glDeleteProgram(m_programID));
-		m_programID = 0;
+		GLcall(glDeleteProgram(id));
+        id = 0;
 	}
 	
-	void Bind() const { GLcall(glUseProgram(m_programID)); }
+	void Bind() const { GLcall(glUseProgram(id)); }
 	
 	static void Unbind() { GLcall(glUseProgram(0)); }
 

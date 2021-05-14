@@ -15,11 +15,15 @@ struct Material {
     vec3 specularColor = vec3(1);
     float shininess = 32;
     vec4 color=vec4(1);
-    Texture diffuseMap;
-    Texture specularMap;
-    Texture normalMap;
-    Texture heightMap;
+    std::string diffuseMap;
+    std::string specularMap;
+    std::string normalMap;
+    std::string heightMap;
 
+//    Texture diffuseMap;
+//    Texture specularMap;
+//    Texture normalMap;
+//    Texture heightMap;
     Material() {}
 };
 

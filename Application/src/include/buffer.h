@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstring>
+#include <algorithm>
 #include "core.h"
 
 std::vector<uint32_t> activeVBO;
