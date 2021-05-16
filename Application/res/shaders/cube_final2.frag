@@ -70,6 +70,8 @@ uniform vec3 ambientLight;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
+vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
+
 
 void main()
 {
@@ -80,11 +82,12 @@ void main()
     vec3 result=vec3(0);
 
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
-        result += CalcPointLight(pointLights[i], norm, f_position, viewDir);
+        result += CalcPointLight2(pointLights[i], norm, f_position, viewDir);
 
     // result+=CalcDirLight(dirLight,norm,viewDir);
 
-    final_color = vec4(result, 1.0);
+    //final_color = vec4(result, 1.0);
+    final_color = vec4(1.0);
 }
 
 vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)

@@ -54,6 +54,8 @@ const std::string pathDelemeter("/");
 //#define GLcall_P(y, x) y = x
 //#endif
 
+
+
 #define GLcall(x) x
 #define GLcall_P(y, x) y = x
 
@@ -298,46 +300,6 @@ struct Vertex
 };
 
 
-// struct Vertex
-// {
-// 	vec3 position;
-// 	vec4 color;
-// 	vec3 normal;
-// 	vec2 texCoord;
-// 	float tex_id;
-// 	Vertex(const vec3 &pos, const vec4 &col = 0, const vec3 &nor = 0, const vec2 &tex = 0, const float texid = 0)
-// 		: position(pos), color(col), normal(nor), texCoord(tex), tex_id(texid) {}
-// 	Vertex() {}
-// 	Vertex(const Vertex2 &in) :position(in.position),normal(in.normal),texCoord(in.texCoord),color(1,0,0){}
-// 	friend std::ostream &operator<<(std::ostream &out, Vertex in)
-// 	{
-// 		out << "position =";
-// 		out << "( " << in.position.x << ", " << in.position.y << ", " << in.position.z << ")\n";
-// 		out << "color =";
-// 		out << "( " << in.color.x << ", " << in.color.y << ", " << in.color.z << ", " << in.color.w << ")\n";
-// 		return out;
-// 	}
-// };
-
-
-struct Indexdata
-{
-	std::vector<uint> primitive;
-	vec4 color;
-	std::vector<vec2> texCoord;
-	float tex_id;
-
-	Indexdata(std::vector<uint> indices, const vec4 col, std::vector<vec2> tex = std::vector<vec2>(0, 0),
-			  float id = 0)
-		: primitive(std::move(indices)), color(col), texCoord(std::move(tex)), tex_id(id)
-	{
-		if (texCoord.empty())
-			tex_id = 0;
-		else if (tex_id == 0)
-			tex_id = 1;
-	}
-};
-
 struct pointLight
 {
 	vec3 position;
@@ -348,6 +310,7 @@ struct pointLight
 	float constant;
 	float linear;
 	float quadratic;
+
 	pointLight(const vec3 &pos, const float &intensity, const vec3 &diffcol = 1, const vec3 &speccol = 1) : position(pos), diffusecolor(diffcol), specularcolor(speccol), intensity(intensity) {}
 };
 

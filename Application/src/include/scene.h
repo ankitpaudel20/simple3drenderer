@@ -47,7 +47,6 @@ struct scene{
         nodes.push_back(temp);
     }
 
-
 };
 
 #endif //OPENGL_CORE_SCENE_H

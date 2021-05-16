@@ -49,7 +49,7 @@ else()
         # find_package(ASSIMP REQUIRED)
         # target_include_directories(Application PRIVATE ${ASSIMP_INCLUDE_DIR})
         # target_link_libraries(Application PRIVATE libglfw3_linux.a pthread dl GL assimp z zip m)       
-        target_link_libraries(Application PRIVATE libglfw3_linux.a pthread dl GL assimp z X11)       
+        target_link_libraries(Application PRIVATE glfw pthread dl GL assimp z X11)
 
         message("Linked to Linux")
 

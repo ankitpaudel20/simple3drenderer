@@ -13,7 +13,6 @@ namespace fs = std::filesystem;
 double mx, my;
 bool captured = false;
 float aspect_ratio;
-vec3 lightPos(2.0f, 2.0f, 2.0f);
 
 #define NR_POINT_LIGHTS 1
 
@@ -168,57 +167,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
                         break;
                     }
                     selected_light++;
-                    break;
-                case GLFW_KEY_W:
-                    s.cam.Camera_Position += cameraSpeed * s.cam.Camera_Facing_Direction;
-                    break;
-                case GLFW_KEY_A:
-                    s.cam.Camera_Position -=
-                            cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
-                    break;
-                case GLFW_KEY_S:
-                    s.cam.Camera_Position -= cameraSpeed * s.cam.Camera_Facing_Direction;
-                    break;
-                case GLFW_KEY_D:
-                    s.cam.Camera_Position +=
-                            cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
-                    break;
-                case GLFW_KEY_E:
-                    s.cam.Camera_Position += cameraSpeed * s.cam.Camera_Up;
-                    break;
-                case GLFW_KEY_Q:
-                    s.cam.Camera_Position -= cameraSpeed * s.cam.Camera_Up;
-                    break;
-                case GLFW_KEY_UP:
-                    s.pointLights[selected_light].position.x += (0.05 * s.cam.Camera_Facing_Direction.x);
-                    s.pointLights[selected_light].position.y += (0.05 * s.cam.Camera_Facing_Direction.y);
-                    s.pointLights[selected_light].position.z += (0.05 * s.cam.Camera_Facing_Direction.z);
-                    break;
-                case GLFW_KEY_DOWN:
-                    s.pointLights[selected_light].position.x -= (0.05 * s.cam.Camera_Facing_Direction.x);
-                    s.pointLights[selected_light].position.y -= (0.05 * s.cam.Camera_Facing_Direction.y);
-                    s.pointLights[selected_light].position.z -= (0.05 * s.cam.Camera_Facing_Direction.z);
-                    break;
-                case GLFW_KEY_LEFT:
-                    s.pointLights[selected_light].position.x += (0.05 * left.x);
-                    s.pointLights[selected_light].position.y += (0.05 * left.y);
-                    s.pointLights[selected_light].position.z += (0.05 * left.z);
-                    break;
-                case GLFW_KEY_RIGHT:
-                    s.pointLights[selected_light].position.x -= (0.05 * left.x);
-                    s.pointLights[selected_light].position.y -= (0.05 * left.y);
-                    s.pointLights[selected_light].position.z -= (0.05 * left.z);
-                    break;
-                case GLFW_KEY_KP_0:
-                    s.pointLights[selected_light].position.x += (0.05 * s.cam.Camera_Up.x);
-                    s.pointLights[selected_light].position.y += (0.05 * s.cam.Camera_Up.y);
-                    s.pointLights[selected_light].position.z += (0.05 * s.cam.Camera_Up.z);
-                    break;
-                case GLFW_KEY_KP_1:
-                    s.pointLights[selected_light].position.x -= (0.05 * s.cam.Camera_Up.x);
-                    s.pointLights[selected_light].position.y -= (0.05 * s.cam.Camera_Up.y);
-                    s.pointLights[selected_light].position.z -= (0.05 * s.cam.Camera_Up.z);
-                    break;
+                    break;                
                 default:
                     break;
             }
@@ -226,70 +175,70 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     }
 }
 
-//
-//void processInput(GLFWwindow *window, scene &s) {
-//    const float cameraSpeed = 2.5f * deltatime;
-//
-//    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-//        s.cam.Camera_Position += cameraSpeed * s.cam.Camera_Facing_Direction;
-//
-//    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-//        s.cam.Camera_Position -=
-//                cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
-//
-//    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-//        s.cam.Camera_Position -= cameraSpeed * s.cam.Camera_Facing_Direction;
-//
-//    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-//        s.cam.Camera_Position +=
-//                cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
-//
-//    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-//        s.cam.Camera_Position += cameraSpeed * s.cam.Camera_Up;
-//
-//    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-//        s.cam.Camera_Position -= cameraSpeed * s.cam.Camera_Up;
-//
-//    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-//        s.pointLights[selected_light].position.x += (0.05 * s.cam.Camera_Facing_Direction.x);
-//        s.pointLights[selected_light].position.y += (0.05 * s.cam.Camera_Facing_Direction.y);
-//        s.pointLights[selected_light].position.z += (0.05 * s.cam.Camera_Facing_Direction.z);
-//        //s.pointLights[selected_light].position += (0.05 * vec3(s.cam.Camera_Facing_Direction));
-//        //s.pointLights[selected_light].position.z -= cameraSpeed * 5;
-//    }
-//
-//    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-//        s.pointLights[selected_light].position.x -= (0.05 * s.cam.Camera_Facing_Direction.x);
-//        s.pointLights[selected_light].position.y -= (0.05 * s.cam.Camera_Facing_Direction.y);
-//        s.pointLights[selected_light].position.z -= (0.05 * s.cam.Camera_Facing_Direction.z);
-//    }
-//
-//    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-//        vec3 a = glm::cross(s.cam.Camera_Up, s.cam.Camera_Facing_Direction);
-//        s.pointLights[selected_light].position.x += (0.05 * a.x);
-//        s.pointLights[selected_light].position.y += (0.05 * a.y);
-//        s.pointLights[selected_light].position.z += (0.05 * a.z);
-//    }
-//
-//    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-//        vec3 a = glm::cross(s.cam.Camera_Up, s.cam.Camera_Facing_Direction);
-//        s.pointLights[selected_light].position.x -= (0.05 * a.x);
-//        s.pointLights[selected_light].position.y -= (0.05 * a.y);
-//        s.pointLights[selected_light].position.z -= (0.05 * a.z);
-//    }
-//
-//    if (glfwGetKey(window, GLFW_KEY_KP_0) == GLFW_PRESS) {
-//        s.pointLights[selected_light].position.x += (0.05 * s.cam.Camera_Up.x);
-//        s.pointLights[selected_light].position.y += (0.05 * s.cam.Camera_Up.y);
-//        s.pointLights[selected_light].position.z += (0.05 * s.cam.Camera_Up.z);
-//    }
-//
-//    if (glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS) {
-//        s.pointLights[selected_light].position.x -= (0.05 * s.cam.Camera_Up.x);
-//        s.pointLights[selected_light].position.y -= (0.05 * s.cam.Camera_Up.y);
-//        s.pointLights[selected_light].position.z -= (0.05 * s.cam.Camera_Up.z);
-//    }
-//}
+
+
+void processHoldEvent(GLFWwindow* window)
+{
+    scene& s = *(static_cast<scene*>(glfwGetWindowUserPointer(window)));
+    const float cameraSpeed = 2.5 * s.deltatime;
+    vec3 left = glm::cross(s.cam.Camera_Up, s.cam.Camera_Facing_Direction);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        s.cam.Camera_Position += cameraSpeed * s.cam.Camera_Facing_Direction;
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        s.cam.Camera_Position -=
+        cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        s.cam.Camera_Position -= cameraSpeed * s.cam.Camera_Facing_Direction;
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        s.cam.Camera_Position +=
+        cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        s.cam.Camera_Position += cameraSpeed * s.cam.Camera_Up;
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        s.cam.Camera_Position -= cameraSpeed * s.cam.Camera_Up;
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        s.pointLights[selected_light].position.x += (0.05 * s.cam.Camera_Facing_Direction.x);
+        s.pointLights[selected_light].position.y += (0.05 * s.cam.Camera_Facing_Direction.y);
+        s.pointLights[selected_light].position.z += (0.05 * s.cam.Camera_Facing_Direction.z);       
+         
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+
+        s.pointLights[selected_light].position.x -= (0.05 * s.cam.Camera_Facing_Direction.x);
+        s.pointLights[selected_light].position.y -= (0.05 * s.cam.Camera_Facing_Direction.y);
+        s.pointLights[selected_light].position.z -= (0.05 * s.cam.Camera_Facing_Direction.z);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        s.pointLights[selected_light].position.x += (0.05 * left.x);
+        s.pointLights[selected_light].position.y += (0.05 * left.y);
+        s.pointLights[selected_light].position.z += (0.05 * left.z);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        s.pointLights[selected_light].position.x -= (0.05 * left.x);
+        s.pointLights[selected_light].position.y -= (0.05 * left.y);
+        s.pointLights[selected_light].position.z -= (0.05 * left.z);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_KP_0) == GLFW_PRESS) {
+        s.pointLights[selected_light].position.x += (0.05 * s.cam.Camera_Up.x);
+        s.pointLights[selected_light].position.y += (0.05 * s.cam.Camera_Up.y);
+        s.pointLights[selected_light].position.z += (0.05 * s.cam.Camera_Up.z);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS) {
+        s.pointLights[selected_light].position.x -= (0.05 * s.cam.Camera_Up.x);
+        s.pointLights[selected_light].position.y -= (0.05 * s.cam.Camera_Up.y);
+        s.pointLights[selected_light].position.z -= (0.05 * s.cam.Camera_Up.z);
+    }
+}
 
 std::string searchRes() {
     auto currentPath = fs::current_path();

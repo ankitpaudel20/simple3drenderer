@@ -19,7 +19,6 @@ private:
         if (!m_arrayID) {
             init();
         }
-        Bind();
         glBindVertexArray(m_arrayID);
         GLcall(glBindBuffer(GL_ARRAY_BUFFER, vbo_id));
         GLcall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id));
@@ -171,10 +170,10 @@ template<>
 void Vertexarray::addBuffer<Vertex>(const buffer<Vertex, GL_ARRAY_BUFFER> &vbo,
                                     const buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER> &ibo) {
     m_layout.push<float>(3, GL_FALSE);
-    m_layout.push<float>(4, GL_FALSE);
     m_layout.push<float>(3, GL_FALSE);
     m_layout.push<float>(2, GL_FALSE);
-    m_layout.push<float>(1, GL_FALSE);
+    m_layout.push<float>(3, GL_FALSE);
+    m_layout.push<float>(3, GL_FALSE);
     m_AddBuffer(vbo.id, ibo.id);
 }
 

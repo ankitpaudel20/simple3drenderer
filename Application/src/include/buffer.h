@@ -14,7 +14,6 @@ private:
     std::vector<uint32_t> *list;
 
     void createBuffer() {
-
         glGenBuffers(1, &id);
         list->push_back(id);
     }

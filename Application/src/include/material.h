@@ -19,11 +19,6 @@ struct Material {
     std::string specularMap;
     std::string normalMap;
     std::string heightMap;
-
-//    Texture diffuseMap;
-//    Texture specularMap;
-//    Texture normalMap;
-//    Texture heightMap;
     Material() {}
 };
 

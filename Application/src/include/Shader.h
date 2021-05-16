@@ -258,10 +258,10 @@ public:
 	{
         if (!different) {
             setshader(path);
-            id = CreateShader();
         }else{
-            Shader(path+".vert",path+".frag");
+			setshader2(path + ".vert", path + ".frag");
         }
+			id = CreateShader();
 	}
 	
 	Shader(const std::string& vert, const std::string& frag) : m_path(vert), id(0)

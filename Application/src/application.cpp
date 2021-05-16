@@ -106,6 +106,7 @@ int main(int argc, char* argv[])
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     GLcall(glEnable(GL_DEPTH_TEST));
+
 #pragma endregion
 
 
@@ -163,6 +164,7 @@ int main(int argc, char* argv[])
         {
             glfwMakeContextCurrent(mainWin);
             glfwPollEvents();
+            processHoldEvent(mainWin);
              mainScene.deltatime= glfwGetTime() - LastFrame;
             LastFrame = glfwGetTime();
 
@@ -232,6 +234,7 @@ int main(int argc, char* argv[])
 
                     ImGui::Text("aspect Ratio : %f", aspect_ratio);
                     ImGui::Text("value of facing vector is %.3f %.3f %.3f", mainScene.cam.Camera_Facing_Direction.x, mainScene.cam.Camera_Facing_Direction.y, mainScene.cam.Camera_Facing_Direction.z);
+                    ImGui::Text("camera position %.3f %.3f %.3f", mainScene.cam.Camera_Position.x, mainScene.cam.Camera_Position.y, mainScene.cam.Camera_Position.z);
                     ImGui::Text("value of pitch = %.3f yaw = %.3f roll = %.3f", glm::degrees(mainScene.cam.getAngles().m_pitch), glm::degrees(mainScene.cam.getAngles().m_yaw), glm::degrees(mainScene.cam.getAngles().m_roll));
                     ImGui::Text("value of up vector is %.3f %.3f %.3f", mainScene.cam.Camera_Up.x, mainScene.cam.Camera_Up.y, mainScene.cam.Camera_Up.z);
                     ImGui::Text("glrenderer %s", glrenderer);
