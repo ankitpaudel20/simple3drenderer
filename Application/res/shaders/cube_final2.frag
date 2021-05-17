@@ -84,10 +84,10 @@ void main()
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
         result += CalcPointLight2(pointLights[i], norm, f_position, viewDir);
 
-    // result+=CalcDirLight(dirLight,norm,viewDir);
+    result+=CalcDirLight(dirLight,norm,viewDir);
 
-    //final_color = vec4(result, 1.0);
-    final_color = vec4(1.0);
+    //final_color = vec4(result, 1.0/2);
+    final_color = vec4(vec3(1,0,0),1);
 }
 
 vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)

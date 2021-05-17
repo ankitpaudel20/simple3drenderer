@@ -16,6 +16,7 @@ struct camera {
 	float nearPoint{0.01},farPoint{100.0};
     float FOV{90};
     float sensitivity =0.1;
+	float speed = 2.5;
 
 
 	camera() : Camera_Facing_Direction(0.0f, 0.0f, -1.0f), Camera_Position(0.0f, 0.0f, 0.0f), Camera_Up(0.0f, 1.0f, 0.0f), Camera_Target_distance(10),

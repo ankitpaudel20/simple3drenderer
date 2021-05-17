@@ -120,8 +120,16 @@ int main(int argc, char* argv[])
         scene mainScene;
         glfwSetWindowUserPointer(mainWin,&mainScene);
         mainScene.pointLights.emplace_back(vec3(1),1);
-        mainScene.loadModel(resPath+"/3dModels/nanosuit/nanosuit.obj","cube_final2");
+        mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "box");
+        mainScene.loadModel(resPath+"/3dModels/box.obj","lamp","light");
 
+        if (auto lamp = mainScene.getModel("light"))
+        {
+            mainScene.pointLights[0].model=&lamp->meshes;
+            for (auto& mesh : lamp->meshes)            
+                mesh.scaling = glm::scale(glm::mat4(1), glm::vec3(0.05));            
+        }
+        
         renderer mainRend;
         mainRend.currentScene=&mainScene;
         mainRend.init();
@@ -189,7 +197,7 @@ int main(int argc, char* argv[])
 
             projpersp = glm::perspective(glm::radians(mainScene.cam.FOV), aspect_ratio, near_point, far_point);
 
-
+            mainRend.clear();
             mainRend.Draw();
 
             glfwSwapBuffers(mainWin);
@@ -202,10 +210,7 @@ int main(int argc, char* argv[])
                 ImGui_ImplGlfw_NewFrame();
                 ImGui::NewFrame();
 
-                {
-                    static float f = 0.0f;
-                    static int counter = 0;
-
+                {                   
                     ImGui::Begin("Controls");
 
                     ImGui::SliderFloat3("translate", &translate.x, -5.0f, 2.0f);
@@ -226,6 +231,8 @@ int main(int argc, char* argv[])
 
                     ImGui::SliderFloat("far point", &far_point, 0.0f, 200.0f);
                     ImGui::SliderFloat("POV", &mainScene.cam.FOV, 0.0f, 180.0f);
+                    ImGui::SliderFloat("cameraSensitivity", &mainScene.cam.sensitivity, 0.0f, 3.0f);
+                    ImGui::SliderFloat("camera speed", &mainScene.cam.speed, 0.0f, 5.0f);
                     ImGui::End();
 
                     ImGui::Begin("Information");

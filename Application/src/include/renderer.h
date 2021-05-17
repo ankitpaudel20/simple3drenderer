@@ -24,9 +24,9 @@ static std::map<std::string, Shader> shadersLoaded;
 class renderer {
     std::vector<entity> entities;
 
-    void processNode(node *nodes, const uint32_t &n) {
-        for (int i = 0; i < n; ++i) {
-            for (auto &mesh: nodes[i].meshes) {
+    void processNode(std::map<std::string, node>& nodes) {
+        for (auto & node:nodes) {
+            for (auto &mesh: node.second.meshes) {
                 entity temp;
                 temp.vbo = buffer<Vertex, GL_ARRAY_BUFFER>(mesh.m_vertices);
                 temp.ibo = buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER>(mesh.m_indices);
@@ -34,7 +34,6 @@ class renderer {
                 temp.model = &mesh;
                 if (shadersLoaded.find(mesh.shader) == shadersLoaded.end())
                     shadersLoaded[mesh.shader] = Shader(resPath + "/shaders/" + mesh.shader, true);
-
                 if (!mesh.material.diffuseMap.empty())
                     if (texturesLoaded.find(mesh.material.diffuseMap) == texturesLoaded.end())
                         texturesLoaded[mesh.material.diffuseMap] = Texture(mesh.material.diffuseMap);
@@ -48,9 +47,8 @@ class renderer {
                 temp.specular = &texturesLoaded[mesh.material.specularMap];
                 entities.push_back(temp);
             }
-            processNode(nodes[i].children, nodes[i].nosChildren);
+            processNode(node.second.children);
         }
-
     }
 
 public:
@@ -59,27 +57,38 @@ public:
     scene *currentScene;
     std::string resPath;
 
+
+
+    
+
     void init() {
         resPath = searchRes();
-        if (!currentScene->pointLights.empty()) {
+
+        /*if (!currentScene->pointLights.empty()) {
 
             for (int i = 0; i < cube::pos.size(); ++i) {
                 currentScene->lightCube.m_indices.push_back(i);
                 currentScene->lightCube.m_vertices.emplace_back(cube::pos[i]);
             }
             currentScene->lightCube.shader = "lamp";
-            entity temp;
-            temp.vbo = buffer<Vertex, GL_ARRAY_BUFFER>(currentScene->lightCube.m_vertices);
-            temp.ibo = buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER>(currentScene->lightCube.m_indices);
-            temp.vao = Vertexarray(temp.vbo, temp.ibo);
-            temp.model = &currentScene->lightCube;
+            currentScene->lightCube.scaling = glm::scale(glm::mat4(1), glm::vec3(0.05, 0.05, 0.05));
+            currentScene->lightCube.translation = glm::translate(glm::mat4(1), glm::vec3(1));
             if (shadersLoaded.find(currentScene->lightCube.shader) == shadersLoaded.end())
                 shadersLoaded[currentScene->lightCube.shader] = Shader(resPath + "/shaders/" + currentScene->lightCube.shader, true);
-            temp.shader = &shadersLoaded[currentScene->lightCube.shader];
-            entities.push_back(temp);
-        }
+            for (auto& i : currentScene->pointLights)
+            {
+                entity temp;
+                temp.vbo = buffer<Vertex, GL_ARRAY_BUFFER>(currentScene->lightCube.m_vertices);
+                temp.ibo = buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER>(currentScene->lightCube.m_indices);
+                temp.vao = Vertexarray(temp.vbo, temp.ibo);
+                temp.model = &currentScene->lightCube;
 
-        processNode(&currentScene->nodes[0], currentScene->nodes.size());
+                temp.shader = &shadersLoaded[currentScene->lightCube.shader];
+                entities.push_back(temp);
+            }         
+        }*/
+
+        processNode(currentScene->nodes);       
     }
 
     inline void clear() {
@@ -88,7 +97,7 @@ public:
 
     inline void swapBuffers(GLFWwindow* win) {
         glfwSwapBuffers(win);       
-    }
+    }   
 
     void Draw() {
         auto view = glm::lookAt(currentScene->cam.Camera_Position, currentScene->cam.Camera_Position +
@@ -98,11 +107,11 @@ public:
 
         auto projpersp = glm::perspective(glm::radians(currentScene->cam.FOV), aspect_ratio,
                                           currentScene->cam.nearPoint, currentScene->cam.farPoint);
+        Shader* shader;
 
         for (auto &entity:entities) {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             entity.vao.Bind();
-            Shader *shader = entity.shader;
+            shader = entity.shader;
 
             shader->Bind();
             shader->SetUniform<glm::mat4 *>("model", entity.model->refreshModel());
@@ -130,11 +139,17 @@ public:
                 shader->SetUniform<float>("material.specularStrength", entity.model->material.SpecularStrength);
                 shader->SetUniform<int>("material.diffuseMap", 0);
                 shader->SetUniform<int>("material.specularMap", 1);
-            } else if (entity.model->shader == "lamp") {
-                shader->SetUniform<vec3>("color", currentScene->pointLights[0].diffusecolor);
+                glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
             }
-            glDrawElements(entity.model->m_primitve, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
-        }
+            else if (entity.model->shader == "lamp")
+            {
+                entity.model->refreshModel();
+                glDrawElements(GL_TRIANGLES, entities[0].ibo.m_count, GL_UNSIGNED_INT, nullptr);
+            }         
+            
+        }       
+
+        
 
     }
     

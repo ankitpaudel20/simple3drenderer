@@ -175,12 +175,10 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     }
 }
 
-
-
 void processHoldEvent(GLFWwindow* window)
 {
     scene& s = *(static_cast<scene*>(glfwGetWindowUserPointer(window)));
-    const float cameraSpeed = 2.5 * s.deltatime;
+    const float cameraSpeed = s.cam.speed * s.deltatime;
     vec3 left = glm::cross(s.cam.Camera_Up, s.cam.Camera_Facing_Direction);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

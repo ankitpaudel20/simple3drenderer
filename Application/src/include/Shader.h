@@ -227,6 +227,8 @@ private:
 	
 	void setshader2(const std::string& vert, const std::string& frag)
 	{
+		m_vertpath = vert;
+		m_fragpath = frag;
 		getstring(vert, m_vertex);
 		getstring(frag, m_fragment);
 	}
@@ -252,7 +254,9 @@ public:
 		GLcall(glUniform1i(GetUniformLocation(name), value));
 	}
 
-	Shader()= default;
+	Shader(){
+	    printf("default constructor used to make shader \n");
+	};
 
 	explicit Shader(const std::string& path,bool different=false) : id(0), m_path(path)
 	{
