@@ -75,11 +75,6 @@ void main() {
 
     vec3 diffcolor = vec3(texture(material.diffuseMap, f_texCoord));
 
-    // if (diffcolor == vec3(0)) {
-    //     diffcolor = vec3(material.color);
-    // }
-    // vec3 diffcolor = vec3(material.color);
-
     if (doLightCalculations == 1) {
         for (int i = 0; i < activePointLights; i++) {
             result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffcolor);
