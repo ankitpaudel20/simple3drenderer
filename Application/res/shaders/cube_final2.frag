@@ -85,8 +85,6 @@ void main() {
         result += vec3(material.diffuseColor);
 
     final_color = vec4(result, 1);
-
-    // final_color = vec4(vec3(1, 0, 0), 0.5);
 }
 
 vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffusecolor) {
