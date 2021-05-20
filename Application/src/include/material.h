@@ -4,7 +4,6 @@
 #include "core.h"
 #include "Texture.h"
 
-
 #ifndef OPENGL_CORE_MATERIAL_H
 #define OPENGL_CORE_MATERIAL_H
 
@@ -14,7 +13,7 @@ struct Material {
     float SpecularStrength = 1;
     vec3 specularColor = vec3(1);
     float shininess = 32;
-    vec4 color=vec4(1);
+    vec3 diffuseColor = vec3(0);
     std::string diffuseMap;
     std::string specularMap;
     std::string normalMap;

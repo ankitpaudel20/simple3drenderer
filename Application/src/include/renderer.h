@@ -87,6 +87,9 @@ class renderer {
         processNode(currentScene->nodes);
     }
 
+    void refreshNoPointLights() {
+    }
+
     inline void clear() {
         (glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     }
@@ -121,37 +124,50 @@ class renderer {
           currentScene->dirLights[0].diffusecolor);
           shader->SetUniform<vec3>("dirLight.specularcolor",
           currentScene->dirLights[0].specularcolor);*/
-                shader->SetUniform<vec3>("pointLights[0].position", currentScene->pointLights[0].position);
-                shader->SetUniform<float>("pointLights[0].intensity", currentScene->pointLights[0].intensity);
-                shader->SetUniform<vec3>("pointLights[0].diffusecolor", currentScene->pointLights[0].diffusecolor);
-                shader->SetUniform<vec3>("pointLights[0].specularcolor", currentScene->pointLights[0].specularcolor);
-                shader->SetUniform<float>("pointLights[0].constant", currentScene->pointLights[0].constant);
-                shader->SetUniform<float>("pointLights[0].linear", currentScene->pointLights[0].linear);
-                shader->SetUniform<float>("pointLights[0].quadratic", currentScene->pointLights[0].quadratic);
+                shader->SetUniform<int>("activePointLights", currentScene->pointLights.size());
+                shader->SetUniform<int>("doLightCalculations", entity.model->doLightCalculations);
+                std::string lightString = "pointLights[";
+                int i = 0;
+
+                for (auto &light : currentScene->pointLights) {
+                    lightString += std::to_string(i);
+                    lightString.append("].position");
+                    auto place = lightString.find_first_of(".") + 1;
+
+                    shader->SetUniform<vec3>(lightString.c_str(), light.getpos());
+                    lightString.erase(place);
+                    lightString.append("intensity");
+                    shader->SetUniform<float>(lightString.c_str(), light.intensity);
+                    lightString.erase(place);
+                    lightString.append("diffusecolor");
+                    shader->SetUniform<vec3>(lightString.c_str(), light.getColor());
+                    lightString.erase(place);
+                    lightString.append("constant");
+                    shader->SetUniform<float>(lightString.c_str(), light.constant);
+                    lightString.erase(place);
+                    lightString.append("linear");
+                    shader->SetUniform<float>(lightString.c_str(), light.linear);
+                    lightString.erase(place);
+                    lightString.append("quadratic");
+                    shader->SetUniform<float>(lightString.c_str(), light.quadratic);
+                    i++;
+                    /* code */
+                }
+                entity.diffuse->Bind(0);
+                entity.specular->Bind(1);
+
                 shader->SetUniform<float>("material.shininess", entity.model->material.shininess);
                 shader->SetUniform<vec3>("material.specularColor", entity.model->material.specularColor);
+                shader->SetUniform<vec3>("material.diffuseColor", entity.model->material.diffuseColor);
                 shader->SetUniform<float>("material.ambientStrength", entity.model->material.AmbientStrength);
                 shader->SetUniform<float>("material.diffuseStrength", entity.model->material.DiffuseStrength);
                 shader->SetUniform<float>("material.specularStrength", entity.model->material.SpecularStrength);
                 shader->SetUniform<int>("material.diffuseMap", 0);
                 shader->SetUniform<int>("material.specularMap", 1);
+
+                // shader->SetUniform<vec4>("material.color", entity.model->material.color);
+
                 glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
-            }
-
-            for (auto &i : currentScene->pointLights) {
-                if (i.model) {
-                    shader = &shadersLoaded["lamp"];
-                    shader->Bind();
-                    shader->SetUniform<vec3>("color", i.diffusecolor);
-
-                    shader->SetUniform<glm::mat4 *>("view", &view);
-                    shader->SetUniform<glm::mat4 *>("proj", &projpersp);
-
-                    for (auto &mesh : i.model->meshes) {
-                        mesh.translation = glm::translate(glm::mat4(1), glm::vec3(i.position));
-                        shader->SetUniform<glm::mat4 *>("model", mesh.refreshModel());
-                    }
-                }
             }
         }
     }

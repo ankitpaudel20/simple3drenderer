@@ -27,6 +27,7 @@ struct drawable {
   std::string shader;
   entity *gpuInstance = nullptr;
   uint32_t entity_index;
+  bool doLightCalculations = true;
 
   glm::mat4 scaling = glm::mat4(1.0);
   glm::mat4 translation = glm::mat4(1.0);

@@ -8,14 +8,13 @@ struct Material {
     float ambientStrength;
     float diffuseStrength;
     float specularStrength;
-    vec4 color;
+    vec3 diffuseColor;
 };
 
 struct pointLight {
     vec3 position;
     float intensity;
     vec3 diffusecolor;
-    vec3 specularcolor;
 
     float constant;
     float linear;
@@ -27,7 +26,6 @@ struct DirLight {
     float intensity;
 
     vec3 diffusecolor;
-    vec3 specularcolor;
 };
 
 struct flashLight {
@@ -56,16 +54,17 @@ in vec3 f_bitangent;
 
 out vec4 final_color;
 
-#define NR_POINT_LIGHTS 1
+uniform int activePointLights;
 uniform vec3 camPos;
 uniform Material material;
 uniform DirLight dirLight;
-uniform pointLight pointLights[NR_POINT_LIGHTS];
+uniform pointLight pointLights[50];
 uniform vec3 ambientLight;
+uniform int doLightCalculations;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
-vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
-vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
+vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffusecolor);
+vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffusecolor);
 
 void main() {
 
@@ -76,17 +75,23 @@ void main() {
 
     vec3 diffcolor = vec3(texture(material.diffuseMap, f_texCoord));
 
-    if (diffcolor == vec3(0)) {
-        diffcolor = vec3(material.color);
-    }
+    // if (diffcolor == vec3(0)) {
+    //     diffcolor = vec3(material.color);
+    // }
+    // vec3 diffcolor = vec3(material.color);
 
-    for (int i = 0; i < NR_POINT_LIGHTS; i++)
-        result += CalcPointLight2(pointLights[i], norm, f_position, viewDir, diffcolor);
+    if (doLightCalculations == 1) {
+        for (int i = 0; i < activePointLights; i++) {
+            result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffcolor);
+        }
 
-    result += CalcDirLight(dirLight, norm, viewDir);
+        // result += CalcDirLight(dirLight, norm, viewDir);
+    } else
+        result += vec3(material.diffuseColor);
 
-    //final_color = vec4(result, 1.0/2);
-    final_color = vec4(vec3(1, 0, 0), 1);
+    final_color = vec4(result, 1);
+
+    // final_color = vec4(vec3(1, 0, 0), 0.5);
 }
 
 vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffusecolor) {
@@ -101,8 +106,8 @@ vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     vec3 ambient = attenuation * light.intensity * ambientLight * material.ambientStrength * diffusecolor;
-    vec3 diffuse = attenuation * light.intensity * light.diffusecolor * material.diffuseStrength * diff * diffusecolor);
-    vec3 specular = attenuation * light.intensity * light.specularcolor * material.specularStrength * spec * vec3(texture(material.specularMap, f_texCoord));
+    vec3 diffuse = attenuation * light.intensity * light.diffusecolor * material.diffuseStrength * diff * diffusecolor;
+    vec3 specular = attenuation * light.intensity * light.diffusecolor * material.specularStrength * spec * vec3(texture(material.specularMap, f_texCoord));
     return (ambient + diffuse + specular);
 }
 
@@ -119,7 +124,7 @@ vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, 
 
     vec3 ambient = attenuation * light.intensity * ambientLight * material.ambientStrength * vec3(1.0, 0.0, 0.0);
     vec3 diffuse = attenuation * light.intensity * light.diffusecolor * material.diffuseStrength * diff * vec3(1.0, 0.0, 0.0);
-    vec3 specular = attenuation * light.intensity * light.specularcolor * material.specularStrength * spec * material.specularColor * vec3(1.0, 1.0, 1.0);
+    vec3 specular = attenuation * light.intensity * light.diffusecolor * material.specularStrength * spec * material.specularColor * vec3(1.0, 1.0, 1.0);
     return (ambient + diffuse + specular);
 }
 
@@ -133,7 +138,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
     // combine results
     vec3 ambient = light.intensity * ambientLight * material.ambientStrength * vec3(texture(material.diffuseMap, f_texCoord));
     vec3 diffuse = light.intensity * light.diffusecolor * material.diffuseStrength * diff * vec3(texture(material.diffuseMap, f_texCoord));
-    vec3 specular = light.intensity * light.specularcolor * material.specularStrength * spec * material.specularColor * vec3(texture(material.specularMap, f_texCoord));
+    vec3 specular = light.intensity * light.diffusecolor * material.specularStrength * spec * material.specularColor * vec3(texture(material.specularMap, f_texCoord));
     return (ambient + diffuse + specular);
 }
 
