@@ -1,161 +1,161 @@
 #include "stb_image/stb_image.h"
 #include <string>
 
-#include "Shader.h"
 #include "core.h"
-#include <Vertexarray.h>
-#include <buffer.h>
+#include "Vertexarray.h"
+#include "buffer.h"
 
 class cubeMap {
-  std::string m_filepath;
-  int m_width, m_height, m_BPP;
+    std::string m_filepath;
+    int m_width, m_height, m_BPP;
 
-public:
-  unsigned ID;
+  public:
+    unsigned ID = 0;
 
-  uint32_t getID() const { return ID; }
+    uint32_t getID() const { return ID; }
 
-  std::string getPath() { return m_filepath; }
+    std::string getPath() { return m_filepath; }
 
-  cubeMap(const std::string &filepath) : m_filepath(filepath) {
-    glGenTextures(1, &ID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
+    cubeMap() = default;
 
-    unsigned char *m_LocalBuffer;
+    cubeMap(const std::string &filepath) : m_filepath(filepath) {
+        glGenTextures(1, &ID);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
 
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        unsigned char *m_LocalBuffer;
 
-    std::vector<std::string> faces{
-        pathDelemeter + "right.jpg",
-        pathDelemeter + "left.jpg",
-        pathDelemeter + "top.jpg",
-        pathDelemeter + "bottom.jpg",
-        pathDelemeter + "front.jpg",
-        pathDelemeter + "back.jpg"};
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    stbi_set_flip_vertically_on_load(0);
-    for (unsigned int i = 0; i < faces.size(); i++) {
-      auto fullpath = m_filepath + faces[i];
-      m_LocalBuffer = stbi_load(fullpath.c_str(), &m_width, &m_height, &m_BPP, 0);
+        std::vector<std::string> faces{
+            pathDelemeter + "right.jpg",
+            pathDelemeter + "left.jpg",
+            pathDelemeter + "top.jpg",
+            pathDelemeter + "bottom.jpg",
+            pathDelemeter + "front.jpg",
+            pathDelemeter + "back.jpg"};
 
-      if (!m_LocalBuffer) {
-        std::cout << "skybox texture file unable to load" << std::endl;
-        assert(false);
-      }
+        stbi_set_flip_vertically_on_load(0);
+        for (unsigned int i = 0; i < faces.size(); i++) {
+            auto fullpath = m_filepath + faces[i];
+            m_LocalBuffer = stbi_load(fullpath.c_str(), &m_width, &m_height, &m_BPP, 0);
 
-      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, m_LocalBuffer);
-      stbi_image_free(m_LocalBuffer);
+            if (!m_LocalBuffer) {
+                std::cout << "skybox texture file unable to load" << std::endl;
+                assert(false);
+            }
+
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, m_LocalBuffer);
+            stbi_image_free(m_LocalBuffer);
+        }
+
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+        Unbind();
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     }
 
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    Unbind();
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-  }
+    static void Unbind(unsigned slot = 0) {
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
-  static void Unbind(unsigned slot = 0) {
-    glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D, 0);
-  }
+    void bind() {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
+    }
 
-  void bind() {
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
-  }
-
-  ~cubeMap() {
-    if (ID)
-      std::cout << "Texture freed\n";
-    glDeleteTextures(1, &ID);
-    ID = 0;
-  }
+    ~cubeMap() {
+        if (ID)
+            std::cout << "cubemap Texture freed\n";
+        glDeleteTextures(1, &ID);
+        ID = 0;
+    }
 };
 
 class skyBox {
-  cubeMap map;
-  uint32_t m_vao, m_vbo;
-  Shader m_shader;
+    cubeMap map;
+    uint32_t m_vao = 0, m_vbo = 0;
 
-  std::vector<float> vertices = {
-      // positions
-      -1.0f, 1.0f, -1.0f,
-      -1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
-      1.0f, 1.0f, -1.0f,
-      -1.0f, 1.0f, -1.0f,
+    std::vector<float> vertices = {
+        // positions
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
 
-      -1.0f, -1.0f, 1.0f,
-      -1.0f, -1.0f, -1.0f,
-      -1.0f, 1.0f, -1.0f,
-      -1.0f, 1.0f, -1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
 
-      1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
 
-      -1.0f, -1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, -1.0f, 1.0f,
-      -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
 
-      -1.0f, 1.0f, -1.0f,
-      1.0f, 1.0f, -1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, -1.0f,
 
-      -1.0f, -1.0f, -1.0f,
-      -1.0f, -1.0f, 1.0f,
-      1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
-      -1.0f, -1.0f, 1.0f,
-      1.0f, -1.0f, 1.0f};
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f};
 
-public:
-  skyBox(const std::string &filepath, const std::string shaderPath) : map(filepath), m_shader(shaderPath + pathDelemeter + "skybox.vert", shaderPath + pathDelemeter + "skybox.frag") {
-    glGenBuffers(1, &m_vbo);
-    glGenVertexArrays(1, &m_vao);
+  public:
+    skyBox() = default;
 
-    glBindVertexArray(m_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    skyBox(const std::string &filepath) : map(filepath) {
+        glGenBuffers(1, &m_vbo);
+        glGenVertexArrays(1, &m_vao);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+        glBindVertexArray(m_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-  }
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
 
-  void draw(const glm::mat3 &view, glm::mat4 &projection) {
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
 
-    glm::mat4 mView(view); // remove translation from the view matrix
+    void draw(Shader *shader, const glm::mat3 &view, glm::mat4 &projection) {
+        glm::mat4 mView(view);  // remove translation from the view matrix
+        glDepthFunc(GL_LEQUAL); // change depth function so depth test passes when values are equal to depth buffer's content
+        map.bind();
 
-    glDepthFunc(GL_LEQUAL); // change depth function so depth test passes when values are equal to depth buffer's content
-    map.bind();
+        shader->Bind();
+        shader->SetUniform<glm::mat4 *>("view", &mView);
+        shader->SetUniform<glm::mat4 *>("proj", &projection);
+        shader->SetUniform<int>("skybox", 0);
 
-    m_shader.Bind();
-    m_shader.SetUniform<glm::mat4 *>("view", &mView);
-    m_shader.SetUniform<glm::mat4 *>("proj", &projection);
-    m_shader.SetUniform<int>("skybox", 0);
-
-    // skybox cube
-    glBindVertexArray(m_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
-    glDepthFunc(GL_LESS); // set depth function back to default
-  }
+        // skybox cube
+        glBindVertexArray(m_vao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // set depth function back to default
+    }
 };

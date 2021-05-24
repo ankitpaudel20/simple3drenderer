@@ -27,6 +27,8 @@ struct scene {
 
     drawable<Vertex> lightCube;
 
+    std::string skybox;
+
     camera cam;
     double deltatime = 0;
 
@@ -34,9 +36,9 @@ struct scene {
         //        nodes.emplace_back(node());
     }
 
-    void loadModel(const std::string &modelPath, const std::string &shaderName, const std::string &name) {
+    void loadModel(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
         node temp;
-        temp.meshes = Model::loadModel(modelPath);
+        temp.meshes = Model::loadModel(modelPath, flipUV);
         for (auto &i : temp.meshes) {
             i.shader = shaderName;
         }

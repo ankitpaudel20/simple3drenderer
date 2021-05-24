@@ -33,9 +33,11 @@ const std::string pathDelemeter("/");
 
 //#define _DEBUG
 
-#define ASSERT(x) \
-    if (!(x))     \
-        DEBUG_BREAK;
+#define ASSERT(x)      \
+    if (!(x)) {        \
+        DEBUG_BREAK;   \
+        assert(false); \
+    }
 
 inline void
 GLClearError() {
@@ -95,6 +97,13 @@ struct vec3 {
     }
 
     operator glm::vec3() {
+        return glm::vec3(x, y, z);
+    }
+    operator glm::vec4() const {
+        return glm::vec4(x, y, z, 1.0);
+    }
+
+    operator glm::vec3() const {
         return glm::vec3(x, y, z);
     }
 

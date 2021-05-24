@@ -13,11 +13,11 @@ struct Material {
     float SpecularStrength = 1;
     vec3 specularColor = vec3(1);
     float shininess = 32;
-    vec3 diffuseColor = vec3(0);
+    vec3 diffuseColor = vec3(1);
+    std::string ambientMap;
     std::string diffuseMap;
     std::string specularMap;
     std::string normalMap;
-    std::string heightMap;
     Material() {}
 };
 

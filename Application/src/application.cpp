@@ -10,7 +10,6 @@
 #include "imgui/imgui.h"
 #include "renderer.h"
 #include "shapes.h"
-#include "skybox.h"
 
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
@@ -96,7 +95,7 @@ int main(int argc, char *argv[]) {
     auto glrenderer = glGetString(GL_RENDERER);
     auto glvendor = glGetString(GL_VENDOR);
     glEnable(GL_MULTISAMPLE);
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     (glEnable(GL_DEPTH_TEST));
@@ -110,15 +109,24 @@ int main(int argc, char *argv[]) {
         glfwSetWindowUserPointer(mainWin, &mainScene);
         mainScene.pointLights.emplace_back(vec3(1), 1);
         mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light");
-        mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "box");
+        mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
+        mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
+
         auto lamp = mainScene.getModel("light");
-        auto box = mainScene.getModel("box");
+        auto nanosuit = mainScene.getModel("nanosuit");
+        auto cyborg = mainScene.getModel("cyborg");
+        nanosuit->delpos(vec3(3, 0, 0));
+        cyborg->delpos(vec3(-3, 0, 0));
+        cyborg->setScale(vec3(3));
+        nanosuit->setScale(vec3(0.9));
+
         for (auto &mesh : lamp->meshes) {
             mesh.scaling = glm::scale(glm::mat4(1), glm::vec3(0.05));
             mesh.material.diffuseColor = vec3(1.0);
             mesh.doLightCalculations = false;
         }
         mainScene.pointLights[0].setmodel(lamp);
+        mainScene.skybox = resPath + "/skybox";
 
         renderer mainRend;
         mainRend.currentScene = &mainScene;
@@ -161,12 +169,11 @@ int main(int argc, char *argv[]) {
             mainScene.deltatime = glfwGetTime() - LastFrame;
             LastFrame = glfwGetTime();
 
-            (glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             rotation = {glm::rotate(
-                glm::rotate(glm::rotate(glm::mat4(1.0), glm::radians(rotate.z),
-                                        glm::vec3(0.0f, 0.0f, 1.0f)),
-                            glm::radians(rotate.y), glm::vec3(0.0f, 1.0f, 0.0f)),
+                glm::rotate(
+                    glm::rotate(glm::mat4(1.0), glm::radians(rotate.z), glm::vec3(0.0f, 0.0f, 1.0f)), glm::radians(rotate.y), glm::vec3(0.0f, 1.0f, 0.0f)),
                 glm::radians(rotate.x), glm::vec3(1.0f, 0.0f, 0.0f))};
 
             scaling = glm::scale(glm::mat4(1.0), scale);
@@ -174,14 +181,9 @@ int main(int argc, char *argv[]) {
 
             model = translation * rotation * scaling;
 
-            view = glm::lookAt(mainScene.cam.Camera_Position,
-                               mainScene.cam.Camera_Position +
-                                   mainScene.cam.Camera_Facing_Direction *
-                                       mainScene.cam.Camera_Target_distance,
-                               mainScene.cam.Camera_Up);
+            view = glm::lookAt(mainScene.cam.Camera_Position, mainScene.cam.Camera_Position + mainScene.cam.Camera_Facing_Direction * mainScene.cam.Camera_Target_distance, mainScene.cam.Camera_Up);
 
-            projpersp = glm::perspective(glm::radians(mainScene.cam.FOV),
-                                         aspect_ratio, near_point, far_point);
+            projpersp = glm::perspective(glm::radians(mainScene.cam.FOV), aspect_ratio, near_point, far_point);
 
             mainRend.clear();
             mainRend.Draw();
@@ -211,7 +213,9 @@ int main(int argc, char *argv[]) {
                     if (color != mainScene.pointLights[selected_light].getColor()) {
                         mainScene.pointLights[selected_light].setColor(color);
                     }
-                    ImGui::SliderFloat("liear term", &mainScene.pointLights[selected_light].linear, 0.001f, 0.7f);
+                    ImGui::SliderFloat("pointLight intensity", &mainScene.pointLights[selected_light].intensity, 0.f, 5.f);
+
+                    ImGui::SliderFloat("linear term", &mainScene.pointLights[selected_light].linear, 0.001f, 0.7f);
                     ImGui::SliderFloat("quadratic term", &mainScene.pointLights[selected_light].quadratic, 0.000007f, 1.8f);
 
                     ImGui::Text("position of light is %.3f %.3f %.3f", mainScene.pointLights[selected_light].getpos().x, mainScene.pointLights[selected_light].getpos().y, mainScene.pointLights[selected_light].getpos().z);
@@ -228,7 +232,7 @@ int main(int argc, char *argv[]) {
                         shininess = newshininess;
                         amb = newamb;
                         diff = newdiff;
-                        for (auto &mesh : box->meshes) {
+                        for (auto &mesh : nanosuit->meshes) {
                             mesh.material.shininess = newshininess;
                             mesh.material.AmbientStrength = newamb;
                             mesh.material.DiffuseStrength = newdiff;
