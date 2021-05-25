@@ -111,10 +111,14 @@ int main(int argc, char *argv[]) {
         mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light");
         mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
         mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
+        mainScene.loadModel(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
 
         auto lamp = mainScene.getModel("light");
         auto nanosuit = mainScene.getModel("nanosuit");
         auto cyborg = mainScene.getModel("cyborg");
+        auto hammer = mainScene.getModel("hammer");
+        hammer->delpos(vec3(0, 0, -3.5));
+        hammer->setScale(vec3(0.5));
         nanosuit->delpos(vec3(3, 0, 0));
         cyborg->delpos(vec3(-3, 0, 0));
         cyborg->setScale(vec3(3));
