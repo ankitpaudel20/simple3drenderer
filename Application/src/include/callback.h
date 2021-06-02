@@ -223,6 +223,7 @@ void processHoldEvent(GLFWwindow *window) {
 
 std::string searchRes() {
     auto currentPath = fs::current_path();
+
     auto orgiPath = currentPath;
     bool resPathFound = false, appPathFound = false;
 

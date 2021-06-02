@@ -70,8 +70,8 @@ vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, 
 
 void main() {
 
-    // vec3 norm = normalize(f_normal);
-    vec3 norm = normalize(vec3(texture(material.normalMap, f_texCoord)));
+    vec3 norm = normalize(f_normal);
+    // vec3 norm = normalize(vec3(texture(material.normalMap, f_texCoord)));
     vec3 viewDir = normalize(camPos - f_position);
 
     vec3 result = vec3(0);
