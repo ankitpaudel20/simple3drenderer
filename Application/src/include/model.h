@@ -8,6 +8,8 @@
 
 #include <Shader.h>
 
+#include "drawable.h"
+#include "node.h"
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -15,12 +17,12 @@
 #include <string>
 #include <vector>
 
-#include "drawable.h"
 
 namespace Model {
 
 static std::string directory;
 static std::vector<std::string> textures_loaded;
+static std::map<std::string, node> models_loaded;
 
 // checks all material textures of a given type and loads the textures if they're not loaded yet.
 // the required info is returned as a Texture struct.
@@ -191,8 +193,10 @@ static void processNode(aiNode *node, const aiScene *scene, std::vector<drawable
     printf("node %d processed \n", temp);
 }
 
-// loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
-std::vector<drawable<Vertex>> loadModel(std::string const &path, bool flipUV = false) {
+node *loadModel(std::string const &path, const std::string &shaderName, const std::string &name, bool flipUV = false) {
+    if (models_loaded.find(name) != models_loaded.end()) {
+        return &models_loaded[name];
+    }
     // read file via ASSIMP
     Assimp::Importer importer;
     auto flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
@@ -205,15 +209,23 @@ std::vector<drawable<Vertex>> loadModel(std::string const &path, bool flipUV = f
     {
         std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
         DEBUG_BREAK;
-        return std::vector<drawable<Vertex>>();
+        return nullptr;
     }
     // retrieve the directory path of the filepath
     directory = path.substr(0, path.find_last_of('/'));
-    std::vector<drawable<Vertex>> meshes;
+    node temp;
+
+    // std::vector<drawable<Vertex>> meshes;
 
     // process ASSIMP's root node recursively
-    processNode(scene->mRootNode, scene, meshes, 0);
-    return meshes;
+    processNode(scene->mRootNode, scene, temp.meshes, 0);
+
+    for (auto &i : temp.meshes) {
+        i.shader = shaderName;
+    }
+
+    models_loaded[name] = std::move(temp);
+    return &models_loaded[name];
 }
 
 } // namespace Model

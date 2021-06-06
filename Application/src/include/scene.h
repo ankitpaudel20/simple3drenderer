@@ -19,7 +19,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 struct scene {
-    std::map<std::string, node> nodes;
+    std::map<std::string, node *> nodes;
     // std::vector<node> nodes;
     vec3 ambientLight{1.0};
     std::vector<pointLight> pointLights;
@@ -37,28 +37,28 @@ struct scene {
     }
 
     void loadModel(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
-        node temp;
-        temp.meshes = Model::loadModel(modelPath, flipUV);
-        for (auto &i : temp.meshes) {
-            i.shader = shaderName;
+        if (nodes.find(name) != nodes.end()) {
+            return;
         }
-        nodes[name] = temp;
+        nodes[name] = Model::loadModel(modelPath, shaderName, name, flipUV);
     }
+
+    // void addMesh(const)
 
     node *getModel(const std::string &name) {
         if (nodes.find(name) != nodes.end())
-            return &nodes[name];
+            return nodes[name];
 
         node *ret;
         for (auto &node : nodes)
-            if ((ret = searchNode(&node.second, name)) != nullptr)
+            if ((ret = searchNode(node.second, name)) != nullptr)
                 return ret;
 
         return nullptr;
     }
 
   private:
-    static node *searchNode(node *parent, const std::string &name) {
+    node *searchNode(node *parent, const std::string &name) {
         if (parent->children.empty())
             return nullptr;
 
