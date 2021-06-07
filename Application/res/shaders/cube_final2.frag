@@ -27,7 +27,7 @@ struct DirLight {
     vec3 direction;
     float intensity;
 
-    vec3 diffuseColor;
+    vec3 color;
 };
 
 struct flashLight {
@@ -64,7 +64,7 @@ uniform pointLight pointLights[50];
 uniform vec3 ambientLight;
 uniform int doLightCalculations;
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffuseColor);
 vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor);
 vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor);
 
@@ -86,9 +86,8 @@ void main() {
         for (int i = 0; i < activePointLights; i++) {
             result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor);
         }
-        // result += vec3(texture(material.specularMap, f_texCoord));
 
-        // result += CalcDirLight(dirLight, norm, viewDir);
+        // result += CalcDirLight(dirLight, norm, viewDir, diffColor);
     } else
         result += diffColor;
 
@@ -137,7 +136,7 @@ vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, 
     return (ambient + diffuse + specular);
 }
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffuseColor) {
     vec3 lightDir = normalize(-light.direction);
     // diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
@@ -145,10 +144,11 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     // combine results
-    vec3 ambient = light.intensity * ambientLight * material.ambientStrength * vec3(texture(material.diffuseMap, f_texCoord));
-    vec3 diffuse = light.intensity * light.diffuseColor * material.diffuseStrength * diff * vec3(texture(material.diffuseMap, f_texCoord));
-    vec3 specular = light.intensity * light.diffuseColor * material.specularStrength * spec * material.specularColor * vec3(texture(material.specularMap, f_texCoord));
+    vec3 ambient = light.intensity * ambientLight * material.ambientStrength * diffuseColor;
+    vec3 diffuse = light.intensity * light.color * material.diffuseStrength * diff * diffuseColor;
+    vec3 specular = light.intensity * light.color * material.specularStrength * spec * material.specularColor;
     return (ambient + diffuse + specular);
+    // return (specular);
 }
 
 vec3 calculateFlashLight(flashLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {

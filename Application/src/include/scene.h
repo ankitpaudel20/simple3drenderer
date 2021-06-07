@@ -36,14 +36,13 @@ struct scene {
         //        nodes.emplace_back(node());
     }
 
-    void loadModel(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
+    node *loadModel(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
         if (nodes.find(name) != nodes.end()) {
-            return;
+            return nodes[name];
         }
         nodes[name] = Model::loadModel(modelPath, shaderName, name, flipUV);
+        return nodes[name];
     }
-
-    // void addMesh(const)
 
     node *getModel(const std::string &name) {
         if (nodes.find(name) != nodes.end())

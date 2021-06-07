@@ -13,7 +13,6 @@
 #include "shapes.h"
 
 int main(int argc, char *argv[]) {
-    std::cout << "this is a test" << argv[0];
 
 #pragma region windowInitialization
     glfwSetErrorCallback(error_callback);
@@ -49,6 +48,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+    glfwSwapInterval(1);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -68,6 +68,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+    glfwSwapInterval(1);
 
 #ifdef MDEBUG
     int flags;
@@ -76,8 +77,7 @@ int main(int argc, char *argv[]) {
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(glDebugOutput, nullptr);
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr,
-                              GL_TRUE);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     }
 #endif
 
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     auto glrenderer = glGetString(GL_RENDERER);
     auto glvendor = glGetString(GL_VENDOR);
     glEnable(GL_MULTISAMPLE);
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     (glEnable(GL_DEPTH_TEST));
@@ -108,31 +108,48 @@ int main(int argc, char *argv[]) {
         scene mainScene;
         glfwSetWindowUserPointer(mainWin, &mainScene);
         mainScene.pointLights.emplace_back(vec3(1), 1);
-        mainScene.loadModel(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
-        mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light");
-        mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
-        mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
+        mainScene.dirLights.emplace_back(vec3(-1, -1, 0), 0.8, 1, 1);
+        auto lamp = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light");
+        for (auto &mesh : lamp->meshes) {
+            mesh->setScale(vec3(0.05));
+            // mesh.material.diffuseColor = vec3(1.0);
+            mesh->doLightCalculations = false;
+        }
+        mainScene.pointLights[0].setmodel(lamp);
+        mainScene.skybox = resPath + "/skybox";
 
-        auto hammer = mainScene.getModel("hammer");
+        auto cyborg = mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
+        auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
+        auto hammer = mainScene.loadModel(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
+
         hammer->delpos(vec3(0, 5, -3));
         hammer->setScale(vec3(0.5));
-        auto lamp = mainScene.getModel("light");
-        auto nanosuit = mainScene.getModel("nanosuit");
-        auto cyborg = mainScene.getModel("cyborg");
+
         nanosuit->delpos(vec3(3, 0, 0));
         nanosuit->setRotation(vec3(90, 0, 0));
         cyborg->delpos(vec3(-3, 0, 0));
         cyborg->setScale(vec3(3));
         nanosuit->setScale(vec3(0.9));
 
-        for (auto &mesh : lamp->meshes) {
-            mesh.scaling = glm::scale(glm::mat4(1), glm::vec3(0.05));
-            mesh.material.diffuseColor = vec3(1.0);
-            mesh.doLightCalculations = false;
-        }
-        mainScene.pointLights[0].setmodel(lamp);
-        mainScene.skybox = resPath + "/skybox";
+        // auto glass = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "glass_cube");
+        // glass->meshes[0].delpos(-1);
+        // glass->meshes[0].setScale(vec3(1, 1, 0.05));
 
+        // node trans;
+        // std::vector<Vertex> out;
+        // drawable<Vertex> side_z, side_not_z, remaining;
+
+        // int i = 0;
+        // for (auto &point : glass->meshes[0].m_vertices) {
+        //     if (point.normal.z == 1) {
+        //         side_z.m_vertices.push_back(point);
+        //     } else if (point.normal.z == -1) {
+        //         side_not_z.m_vertices.push_back(point);
+        //     } else
+        //         remaining.m_vertices.push_back(point);
+        // }
+
+        // newnode.meshes.push_back();
         // drawable<Vertex> cube;
 
         renderer mainRend;
@@ -168,8 +185,7 @@ int main(int argc, char *argv[]) {
         double LastFrame = 0;
         float shininess = 32, amb = 0.1, diff = 1.0;
         float newshininess = shininess, newamb = amb, newdiff = diff;
-        while (
-            !(glfwWindowShouldClose(imguiWin) || glfwWindowShouldClose(mainWin))) {
+        while (!(glfwWindowShouldClose(imguiWin) || glfwWindowShouldClose(mainWin))) {
             glfwMakeContextCurrent(mainWin);
             glfwPollEvents();
             processHoldEvent(mainWin);
@@ -219,24 +235,16 @@ int main(int argc, char *argv[]) {
                     ImGui::SliderFloat3("rotate", &rotate.x, -180.0f, 180.0f);
                     // ImGui::SliderFloat3("color", &lightColor.x, 0.0f, 1.0f);
                     // ImGui::SliderFloat("near point", &near_point, 0.0f, 5.0f);
-                    ImGui::SliderFloat3("ambientLight color", &mainScene.ambientLight.x,
-                                        0.0f, 1.0f);
+                    ImGui::SliderFloat3("ambientLight color", &mainScene.ambientLight.x, 0.0f, 1.0f);
                     vec3 color = mainScene.pointLights[selected_light].getColor();
-                    ImGui::SliderFloat3("pointLight color diffused", &color.x, 0.0f,
-                                        1.0f);
+                    ImGui::SliderFloat3("pointLight color diffused", &color.x, 0.0f, 1.0f);
                     if (color != mainScene.pointLights[selected_light].getColor()) {
                         mainScene.pointLights[selected_light].setColor(color);
                     }
-                    ImGui::SliderFloat("pointLight intensity",
-                                       &mainScene.pointLights[selected_light].intensity,
-                                       0.f, 5.f);
+                    ImGui::SliderFloat("pointLight intensity", &mainScene.pointLights[selected_light].intensity, 0.f, 5.f);
 
-                    ImGui::SliderFloat("linear term",
-                                       &mainScene.pointLights[selected_light].linear,
-                                       0.001f, 0.7f);
-                    ImGui::SliderFloat("quadratic term",
-                                       &mainScene.pointLights[selected_light].quadratic,
-                                       0.000007f, 1.8f);
+                    ImGui::SliderFloat("linear term", &mainScene.pointLights[selected_light].linear, 0.001f, 0.7f);
+                    ImGui::SliderFloat("quadratic term", &mainScene.pointLights[selected_light].quadratic, 0.000007f, 1.8f);
 
                     ImGui::Text("position of light is %.3f %.3f %.3f",
                                 mainScene.pointLights[selected_light].getpos().x,
@@ -245,12 +253,8 @@ int main(int argc, char *argv[]) {
                     // ImGui::SliderFloat3("rotate", &light.direction.x, 0.0f, 1.0f);
                     // ImGui::SliderFloat3("Specular Reflectivity", &material.specular.x,
                     // 0.0f, 1.0f);
-                    ImGui::SliderFloat("liear term",
-                                       &mainScene.pointLights[selected_light].linear,
-                                       0.001f, 0.7f);
-                    ImGui::SliderFloat("quadratic term",
-                                       &mainScene.pointLights[selected_light].quadratic,
-                                       0.000007f, 1.8f);
+                    ImGui::SliderFloat3("direction light direction", &mainScene.dirLights[0].direction.x, -1.f, 1.f);
+                    ImGui::SliderFloat("direction light intensity", &mainScene.dirLights[0].intensity, 0.f, 1.f);
 
                     ImGui::SliderFloat("Shineness", &newshininess, 0.0f, 512.0f);
                     ImGui::SliderFloat("ambientStrength", &newamb, 0.0f, 1.f);
@@ -275,10 +279,7 @@ int main(int argc, char *argv[]) {
                     ImGui::End();
 
                     ImGui::Begin("Information");
-                    ImGui::Text("no of Drawcalls :%d", noDrawCalls);
-                    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                                1000.0f / ImGui::GetIO().Framerate,
-                                ImGui::GetIO().Framerate);
+                    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
                     ImGui::Text("aspect Ratio : %f", aspect_ratio);
                     ImGui::Text("value of facing vector is %.3f %.3f %.3f",

@@ -1,6 +1,5 @@
 #include "core.h"
 
-
 struct pointLight {
   private:
     vec3 position;
@@ -9,7 +8,9 @@ struct pointLight {
 
     inline void refreshModelMatrix() {
         for (auto &mesh : model->meshes) {
-            mesh.translation = glm::translate(glm::mat4(1), (glm::vec3)position);
+            auto iden = glm::mat4(1);
+            mesh->delpos(position, &iden);
+            // mesh.translation = glm::translate(glm::mat4(1), (glm::vec3)position);
         }
     }
 
@@ -45,7 +46,7 @@ struct pointLight {
         diffuseColor = color;
         if (model) {
             for (auto &mesh : model->meshes) {
-                mesh.material.diffuseColor = color;
+                mesh->material.diffuseColor = color;
             }
         }
     }

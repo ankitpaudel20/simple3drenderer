@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-
 #ifdef _WIN32
 const std::string pathDelemeter(std::string("\\") + "\\");
 #else
@@ -212,11 +211,11 @@ struct vec2 {
 };
 
 struct Vertex {
-    vec3 position;
-    vec3 normal;
-    vec2 texCoord;
-    vec3 tangent;
-    vec3 bitangent;
+    vec3 position = 0;
+    vec3 normal = 0;
+    vec2 texCoord = 0;
+    vec3 tangent = 0;
+    vec3 bitangent = 0;
 
     Vertex(const vec3 &pos, const vec3 &nor = 0, const vec2 &texcoord = 0, const vec3 &tangent = 0, const vec3 &bitangent = 0, const float texid = 0)
         : position(pos), normal(nor), tangent(tangent), bitangent(bitangent), texCoord(texcoord) {}
@@ -227,7 +226,6 @@ struct dirLight {
     vec3 direction;
     float intensity;
 
-    vec3 diffusecolor;
-    vec3 specularcolor;
-    dirLight(const vec3 &dir, const float &intensity, const vec3 &diffcol = 1, const vec3 &speccol = 1) : direction(dir), diffusecolor(diffcol), specularcolor(speccol), intensity(intensity) {}
+    vec3 color;
+    dirLight(const vec3 &dir, const float &intensity, const vec3 &diffcol = 1, const vec3 &speccol = 1) : direction(dir), color(diffcol), intensity(intensity) {}
 };

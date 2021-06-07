@@ -12,17 +12,18 @@
 #include "node.h"
 #include <fstream>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <sstream>
 #include <string>
 #include <vector>
-
 
 namespace Model {
 
 static std::string directory;
 static std::vector<std::string> textures_loaded;
-static std::map<std::string, node> models_loaded;
+static std::unordered_map<std::string, node> models_loaded;
+static std::unordered_map<std::string, node *> models_loaded_path;
+static std::unordered_map<std::string, Mesh> meshes_loaded;
 
 // checks all material textures of a given type and loads the textures if they're not loaded yet.
 // the required info is returned as a Texture struct.
@@ -79,7 +80,7 @@ static std::string loadMaterialTexture(aiMaterial *mat, aiTextureType type, cons
     return std::string();
 }
 
-static drawable<Vertex> processMesh(aiMesh *mesh, const aiScene *scene) {
+static drawable<Vertex> *processMesh(aiMesh *mesh, const aiScene *scene) {
     // data to fill
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -168,14 +169,17 @@ static drawable<Vertex> processMesh(aiMesh *mesh, const aiScene *scene) {
     textures.push_back(normalMaps);
 
     // return a mesh object created from the extracted mesh data
-    drawable<Vertex> toreturn(vertices, indices, textures);
-    return toreturn;
+    std::string name(mesh->mName.C_Str());
+    printf("name of mesh is: %s\n", mesh->mName.C_Str());
+    meshes_loaded[name] = Mesh(vertices, indices, textures, name);
+    // drawable<Vertex> toreturn(vertices, indices, textures);
+    return &meshes_loaded[mesh->mName.C_Str()];
 }
 
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
-static void processNode(aiNode *node, const aiScene *scene, std::vector<drawable<Vertex>> &meshes, int num) {
+static void processNode(aiNode *node, const aiScene *scene, std::vector<drawable<Vertex> *> &meshes, int num) {
     int temp = num;
-    printf("processing %d node \n", temp);
+    // printf("processing %d node \n", temp);
 
     // process each mesh located at the current node
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -184,16 +188,39 @@ static void processNode(aiNode *node, const aiScene *scene, std::vector<drawable
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         auto me = processMesh(mesh, scene);
         meshes.push_back(std::move(me));
-        printf("\t \t mesh %d processed\n", i);
+        // printf("\t \t mesh %d processed\n", i);
     }
     // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
         processNode(node->mChildren[i], scene, meshes, ++num);
     }
-    printf("node %d processed \n", temp);
+    // printf("node %d processed \n", temp);
 }
 
 node *loadModel(std::string const &path, const std::string &shaderName, const std::string &name, bool flipUV = false) {
+
+    if (models_loaded_path.find(path) != models_loaded_path.end()) {
+        if (models_loaded_path[path] == &models_loaded[name]) {
+            std::cout << "already loaded same module with same name and path os returning refrence to previous obj\n";
+            DEBUG_BREAK;
+        }
+        auto previous_node = *models_loaded_path[path];
+        node temp;
+        for (auto &m : previous_node.meshes) {
+            Mesh temp_mesh;
+            temp_mesh.m_vertices = m->m_vertices;
+            temp_mesh.m_indices = m->m_indices;
+            temp_mesh.material = m->material;
+            temp_mesh.shader = shaderName;
+            temp_mesh.name = m->name + "copy";
+            meshes_loaded[temp_mesh.name] = std::move(temp_mesh);
+            temp.meshes.push_back(&meshes_loaded[temp_mesh.name]);
+        }
+
+        models_loaded[name] = std::move(temp);
+        return &models_loaded[name];
+    }
+
     if (models_loaded.find(name) != models_loaded.end()) {
         return &models_loaded[name];
     }
@@ -221,10 +248,11 @@ node *loadModel(std::string const &path, const std::string &shaderName, const st
     processNode(scene->mRootNode, scene, temp.meshes, 0);
 
     for (auto &i : temp.meshes) {
-        i.shader = shaderName;
+        i->shader = shaderName;
     }
 
     models_loaded[name] = std::move(temp);
+    models_loaded_path[path] = &models_loaded[name];
     return &models_loaded[name];
 }
 
