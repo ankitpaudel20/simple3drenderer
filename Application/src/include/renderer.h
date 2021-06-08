@@ -20,8 +20,8 @@ struct entity {
     Texture *ambient, *diffuse, *specular, *normal;
 };
 
-static std::map<std::string, Texture> texturesLoaded;
-static std::map<std::string, Shader> shadersLoaded;
+static std::unordered_map<std::string, Texture> texturesLoaded;
+static std::unordered_map<std::string, Shader> shadersLoaded;
 
 class renderer {
     std::vector<entity> entities;
@@ -90,71 +90,74 @@ class renderer {
         Shader *shader;
 
         for (auto &entity : entities) {
-            entity.vao.Bind();
-            shader = entity.shader;
+            if (entity.mesh->draw) {
 
-            shader->Bind();
-            shader->SetUniform<glm::mat4 *>("model", &entity.mesh->matModel);
-            shader->SetUniform<glm::mat4 *>("view", &view);
-            shader->SetUniform<glm::mat4 *>("proj", &projpersp);
+                entity.vao.Bind();
+                shader = entity.shader;
 
-            if (entity.mesh->shader == "cube_final2") {
-                shader->SetUniform<vec3>("ambientLight", currentScene->ambientLight);
+                shader->Bind();
+                shader->SetUniform<glm::mat4 *>("model", &entity.mesh->matModel);
+                shader->SetUniform<glm::mat4 *>("view", &view);
+                shader->SetUniform<glm::mat4 *>("proj", &projpersp);
 
-                shader->SetUniform<int>("doLightCalculations", entity.mesh->doLightCalculations);
-                if (entity.mesh->doLightCalculations) {
-                    shader->SetUniform<vec3>("dirLight.direction", currentScene->dirLights[0].direction);
-                    shader->SetUniform<float>("dirLight.intensity", currentScene->dirLights[0].intensity);
-                    shader->SetUniform<vec3>("dirLight.color", currentScene->dirLights[0].color);
+                if (entity.mesh->shader == "cube_final2") {
+                    shader->SetUniform<vec3>("ambientLight", currentScene->ambientLight);
 
-                    shader->SetUniform<int>("activePointLights", currentScene->pointLights.size());
+                    shader->SetUniform<int>("doLightCalculations", entity.mesh->doLightCalculations);
+                    if (entity.mesh->doLightCalculations) {
+                        /* shader->SetUniform<vec3>("dirLight.direction", currentScene->dirLights[0].direction);
+                        shader->SetUniform<float>("dirLight.intensity", currentScene->dirLights[0].intensity);
+                        shader->SetUniform<vec3>("dirLight.color", currentScene->dirLights[0].color);*/
 
-                    std::string lightString = "pointLights[";
-                    int i = 0;
+                        shader->SetUniform<int>("activePointLights", currentScene->pointLights.size());
 
-                    for (auto &light : currentScene->pointLights) {
-                        lightString += std::to_string(i);
-                        lightString.append("].position");
-                        auto place = lightString.find_first_of(".") + 1;
+                        std::string lightString = "pointLights[";
+                        int i = 0;
 
-                        shader->SetUniform<vec3>(lightString.c_str(), light.getpos());
-                        lightString.erase(place);
-                        lightString.append("intensity");
-                        shader->SetUniform<float>(lightString.c_str(), light.intensity);
-                        lightString.erase(place);
-                        lightString.append("diffuseColor");
-                        shader->SetUniform<vec3>(lightString.c_str(), light.getColor());
-                        lightString.erase(place);
-                        lightString.append("constant");
-                        shader->SetUniform<float>(lightString.c_str(), light.constant);
-                        lightString.erase(place);
-                        lightString.append("linear");
-                        shader->SetUniform<float>(lightString.c_str(), light.linear);
-                        lightString.erase(place);
-                        lightString.append("quadratic");
-                        shader->SetUniform<float>(lightString.c_str(), light.quadratic);
-                        i++;
-                        /* code */
+                        for (auto &light : currentScene->pointLights) {
+                            lightString += std::to_string(i);
+                            lightString.append("].position");
+                            auto place = lightString.find_first_of(".") + 1;
+
+                            shader->SetUniform<vec3>(lightString.c_str(), light.getpos());
+                            lightString.erase(place);
+                            lightString.append("intensity");
+                            shader->SetUniform<float>(lightString.c_str(), light.intensity);
+                            lightString.erase(place);
+                            lightString.append("diffuseColor");
+                            shader->SetUniform<vec3>(lightString.c_str(), light.getColor());
+                            lightString.erase(place);
+                            lightString.append("constant");
+                            shader->SetUniform<float>(lightString.c_str(), light.constant);
+                            lightString.erase(place);
+                            lightString.append("linear");
+                            shader->SetUniform<float>(lightString.c_str(), light.linear);
+                            lightString.erase(place);
+                            lightString.append("quadratic");
+                            shader->SetUniform<float>(lightString.c_str(), light.quadratic);
+                            i++;
+                            /* code */
+                        }
                     }
+
+                    entity.ambient->Bind(0);
+                    entity.diffuse->Bind(1);
+                    entity.specular->Bind(2);
+                    entity.normal->Bind(3);
+
+                    shader->SetUniform<float>("material.shininess", entity.mesh->material.shininess);
+                    shader->SetUniform<vec3>("material.specularColor", entity.mesh->material.specularColor);
+                    shader->SetUniform<vec3>("material.diffuseColor", entity.mesh->material.diffuseColor);
+                    shader->SetUniform<float>("material.ambientStrength", entity.mesh->material.AmbientStrength);
+                    shader->SetUniform<float>("material.diffuseStrength", entity.mesh->material.DiffuseStrength);
+                    shader->SetUniform<float>("material.specularStrength", entity.mesh->material.SpecularStrength);
+                    shader->SetUniform<int>("material.ambientMap", 0);
+                    shader->SetUniform<int>("material.diffuseMap", 1);
+                    shader->SetUniform<int>("material.specularMap", 2);
+                    shader->SetUniform<int>("material.normalMap", 3);
+
+                    glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
                 }
-
-                entity.ambient->Bind(0);
-                entity.diffuse->Bind(1);
-                entity.specular->Bind(2);
-                entity.normal->Bind(3);
-
-                shader->SetUniform<float>("material.shininess", entity.mesh->material.shininess);
-                shader->SetUniform<vec3>("material.specularColor", entity.mesh->material.specularColor);
-                shader->SetUniform<vec3>("material.diffuseColor", entity.mesh->material.diffuseColor);
-                shader->SetUniform<float>("material.ambientStrength", entity.mesh->material.AmbientStrength);
-                shader->SetUniform<float>("material.diffuseStrength", entity.mesh->material.DiffuseStrength);
-                shader->SetUniform<float>("material.specularStrength", entity.mesh->material.SpecularStrength);
-                shader->SetUniform<int>("material.ambientMap", 0);
-                shader->SetUniform<int>("material.diffuseMap", 1);
-                shader->SetUniform<int>("material.specularMap", 2);
-                shader->SetUniform<int>("material.normalMap", 3);
-
-                glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
             }
         }
         if (skybox) {

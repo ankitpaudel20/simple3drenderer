@@ -108,49 +108,96 @@ int main(int argc, char *argv[]) {
         scene mainScene;
         glfwSetWindowUserPointer(mainWin, &mainScene);
         mainScene.pointLights.emplace_back(vec3(1), 1);
-        mainScene.dirLights.emplace_back(vec3(-1, -1, 0), 0.8, 1, 1);
+        //mainScene.dirLights.emplace_back(vec3(-1, -1, 0), 0.8, 1, 1);
         auto lamp = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light");
         for (auto &mesh : lamp->meshes) {
             mesh->setScale(vec3(0.05));
-            // mesh.material.diffuseColor = vec3(1.0);
             mesh->doLightCalculations = false;
         }
         mainScene.pointLights[0].setmodel(lamp);
         mainScene.skybox = resPath + "/skybox";
 
-        auto cyborg = mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
-        auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
-        auto hammer = mainScene.loadModel(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
+        // auto cyborg = mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
+        // auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
+        // auto hammer = mainScene.loadModel(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
 
-        hammer->delpos(vec3(0, 5, -3));
-        hammer->setScale(vec3(0.5));
+        // hammer->delpos(vec3(0, 5, -3));
+        // hammer->setScale(vec3(0.5));
 
-        nanosuit->delpos(vec3(3, 0, 0));
-        nanosuit->setRotation(vec3(90, 0, 0));
-        cyborg->delpos(vec3(-3, 0, 0));
-        cyborg->setScale(vec3(3));
-        nanosuit->setScale(vec3(0.9));
+        // nanosuit->delpos(vec3(3, 0, 0));
+        // nanosuit->setRotation(vec3(90, 0, 0));
+        // cyborg->delpos(vec3(-3, 0, 0));
+        // cyborg->setScale(vec3(3));
+        // nanosuit->setScale(vec3(0.9));
 
-        // auto glass = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "glass_cube");
-        // glass->meshes[0].delpos(-1);
-        // glass->meshes[0].setScale(vec3(1, 1, 0.05));
+        auto colorCube = mainScene.loadModel(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color");
 
-        // node trans;
-        // std::vector<Vertex> out;
-        // drawable<Vertex> side_z, side_not_z, remaining;
+        auto glass = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "glass_cube");
+         glass->meshes[0]->delpos(-1);
+         glass->meshes[0]->setScale(vec3(1, 1, 0.05));
 
+        // drawable<Vertex> side_z, side_not_z, frame;
         // int i = 0;
-        // for (auto &point : glass->meshes[0].m_vertices) {
-        //     if (point.normal.z == 1) {
-        //         side_z.m_vertices.push_back(point);
-        //     } else if (point.normal.z == -1) {
-        //         side_not_z.m_vertices.push_back(point);
+        // for (int i = 0; i < cube::pos.size(); i += 3) {
+        //     auto v1 = cube::pos[i];
+        //     auto v2 = cube::pos[i + 1];
+        //     auto v3 = cube::pos[i + 2];
+        //     vec3 normal;
+        //     if (v1.x == v2.x && v2.x == v3.x) {
+        //         normal = vec3(v1.x, 0, 0);
+        //     } else if (v1.y == v2.y && v2.y == v3.y) {
+        //         normal = vec3(0, v1.y, 0);
         //     } else
-        //         remaining.m_vertices.push_back(point);
+        //         normal = vec3(0, 0, v1.z);
+        //     normal = vec3::normalize(normal);
+        //     // auto gen_normal = -vec3::cross(v1 - v2, v1 - v3);
+        //     // if (gen_normal != normal) {
+        //     //     DEBUG_BREAK;
+        //     // }
+        //     // normal = gen_normal;
+        //     if (normal.z == -1) {
+        //         side_z.m_vertices.emplace_back(v1, normal);
+        //         side_z.m_vertices.emplace_back(v2, normal);
+        //         side_z.m_vertices.emplace_back(v3, normal);
+        //         int p = side_z.m_indices.empty() ? 0 : side_z.m_indices.back() + 1;
+        //         side_z.m_indices.push_back(p);
+        //         side_z.m_indices.push_back(p + 1);
+        //         side_z.m_indices.push_back(p + 2);
+        //     } else if (normal.z == 1) {
+        //         side_not_z.m_vertices.emplace_back(v1, normal);
+        //         side_not_z.m_vertices.emplace_back(v2, normal);
+        //         side_not_z.m_vertices.emplace_back(v3, normal);
+        //         int p = side_not_z.m_indices.empty() ? 0 : side_not_z.m_indices.back() + 1;
+        //         side_not_z.m_indices.push_back(p);
+        //         side_not_z.m_indices.push_back(p + 1);
+        //         side_not_z.m_indices.push_back(p + 2);
+        //     } else {
+        //         frame.m_vertices.emplace_back(v1, normal);
+        //         frame.m_vertices.emplace_back(v2, normal);
+        //         frame.m_vertices.emplace_back(v3, normal);
+        //         int p = frame.m_indices.empty() ? 0 : frame.m_indices.back() + 1;
+        //         frame.m_indices.push_back(p);
+        //         frame.m_indices.push_back(p + 1);
+        //         frame.m_indices.push_back(p + 2);
+        //     }
         // }
-
-        // newnode.meshes.push_back();
-        // drawable<Vertex> cube;
+        // frame.name = "frame";
+        // side_z.name = "side_z";
+        // side_not_z.name = "side_not_z";
+        // frame.shader = side_not_z.shader = side_z.shader = "cube_final2";
+        // frame.delpos(-2);
+        // side_z.delpos(-2);
+        // side_z.delpos(vec3(0, 0, -1));
+        // side_not_z.delpos(-2);
+        // side_not_z.delpos(vec3(0, 0, 1));
+        // Model::meshes_loaded["frame"] = frame;
+        // Model::meshes_loaded["side_z"] = side_z;
+        // Model::meshes_loaded["side_not_z"] = side_not_z;
+        // node trans;
+        // trans.meshes.push_back(&Model::meshes_loaded["frame"]);
+        // trans.meshes.push_back(&Model::meshes_loaded["side_z"]);
+        // trans.meshes.push_back(&Model::meshes_loaded["side_not_z"]);
+        // mainScene.nodes["trans"] = &trans;
 
         renderer mainRend;
         mainRend.currentScene = &mainScene;
@@ -253,8 +300,8 @@ int main(int argc, char *argv[]) {
                     // ImGui::SliderFloat3("rotate", &light.direction.x, 0.0f, 1.0f);
                     // ImGui::SliderFloat3("Specular Reflectivity", &material.specular.x,
                     // 0.0f, 1.0f);
-                    ImGui::SliderFloat3("direction light direction", &mainScene.dirLights[0].direction.x, -1.f, 1.f);
-                    ImGui::SliderFloat("direction light intensity", &mainScene.dirLights[0].intensity, 0.f, 1.f);
+                    //ImGui::SliderFloat3("direction light direction", &mainScene.dirLights[0].direction.x, -1.f, 1.f);
+                    //ImGui::SliderFloat("direction light intensity", &mainScene.dirLights[0].intensity, 0.f, 1.f);
 
                     ImGui::SliderFloat("Shineness", &newshininess, 0.0f, 512.0f);
                     ImGui::SliderFloat("ambientStrength", &newamb, 0.0f, 1.f);

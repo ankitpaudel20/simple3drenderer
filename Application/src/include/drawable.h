@@ -28,6 +28,7 @@ struct drawable {
     uint32_t entity_index;
     bool doLightCalculations = true;
     std::string name;
+    bool draw = true;
 
     glm::mat4 matModel = glm::mat4(1.0);
 

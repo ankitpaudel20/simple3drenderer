@@ -4,13 +4,12 @@ struct pointLight {
   private:
     vec3 position;
     vec3 diffuseColor;
-    node *model;
+    node *model = nullptr;
 
     inline void refreshModelMatrix() {
         for (auto &mesh : model->meshes) {
             auto iden = glm::mat4(1);
             mesh->delpos(position, &iden);
-            // mesh.translation = glm::translate(glm::mat4(1), (glm::vec3)position);
         }
     }
 

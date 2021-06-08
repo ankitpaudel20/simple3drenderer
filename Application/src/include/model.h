@@ -167,13 +167,19 @@ static drawable<Vertex> *processMesh(aiMesh *mesh, const aiScene *scene) {
     // 3. normal maps
     std::string normalMaps = loadMaterialTexture(material, aiTextureType_HEIGHT, "texture_normal");
     textures.push_back(normalMaps);
-
+    aiColor4D diffuse;
+    if (AI_SUCCESS != aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
+        printf("color not found\n");
     // return a mesh object created from the extracted mesh data
     std::string name(mesh->mName.C_Str());
-    printf("name of mesh is: %s\n", mesh->mName.C_Str());
+
+    if (meshes_loaded.find(name)!=meshes_loaded.end())
+    {
+        name += "_copy";
+    }
     meshes_loaded[name] = Mesh(vertices, indices, textures, name);
-    // drawable<Vertex> toreturn(vertices, indices, textures);
-    return &meshes_loaded[mesh->mName.C_Str()];
+    meshes_loaded[name].material.diffuseColor = vec3(diffuse.r, diffuse.g, diffuse.b);
+    return &meshes_loaded[name];
 }
 
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
@@ -187,7 +193,7 @@ static void processNode(aiNode *node, const aiScene *scene, std::vector<drawable
         // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         auto me = processMesh(mesh, scene);
-        meshes.push_back(std::move(me));
+        meshes.push_back(me);
         // printf("\t \t mesh %d processed\n", i);
     }
     // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
@@ -212,9 +218,13 @@ node *loadModel(std::string const &path, const std::string &shaderName, const st
             temp_mesh.m_indices = m->m_indices;
             temp_mesh.material = m->material;
             temp_mesh.shader = shaderName;
-            temp_mesh.name = m->name + "copy";
+            auto name = m->name + "_copy";
+            while (meshes_loaded.find(name)!=meshes_loaded.end()) 
+                name += "_copy";
+            
+            temp_mesh.name =name;
             meshes_loaded[temp_mesh.name] = std::move(temp_mesh);
-            temp.meshes.push_back(&meshes_loaded[temp_mesh.name]);
+            temp.meshes.push_back(&meshes_loaded[name]);
         }
 
         models_loaded[name] = std::move(temp);

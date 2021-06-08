@@ -10,7 +10,7 @@
 #include "drawable.h"
 #include "model.h"
 #include "pointLight.h"
-#include <map>
+#include <unordered_map>
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -19,7 +19,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 struct scene {
-    std::map<std::string, node *> nodes;
+    std::unordered_map<std::string, node *> nodes;
     // std::vector<node> nodes;
     vec3 ambientLight{1.0};
     std::vector<pointLight> pointLights;
