@@ -173,7 +173,7 @@ static drawable<Vertex> *processMesh(aiMesh *mesh, const aiScene *scene) {
     // return a mesh object created from the extracted mesh data
     std::string name(mesh->mName.C_Str());
 
-    if (meshes_loaded.find(name)!=meshes_loaded.end())
+    while (meshes_loaded.find(name)!=meshes_loaded.end())
     {
         name += "_copy";
     }

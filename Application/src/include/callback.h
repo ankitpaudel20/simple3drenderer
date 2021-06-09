@@ -11,6 +11,7 @@ namespace fs = std::filesystem;
 double mx, my;
 bool captured = false;
 float aspect_ratio;
+int winHEIGHT, winWIDTH;
 
 #define NR_POINT_LIGHTS 1
 
@@ -117,6 +118,8 @@ static void cursor_position_callback(GLFWwindow *window, double x, double y) {
 }
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+    winHEIGHT = height;
+    winWIDTH = width;
     glViewport(0, 0, width, height);
     if (height != 0)
         aspect_ratio = (float)width / (float)height;

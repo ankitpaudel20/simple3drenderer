@@ -35,10 +35,12 @@ struct drawable {
     drawable() = default;
 
     drawable(const std::vector<T> &vertices, std::vector<unsigned> indices, std::vector<std::string> tex, const std::string &n) : name(n), m_vertices(vertices), m_indices(std::move(indices)) {
-        material.ambientMap = tex[0];
-        material.diffuseMap = tex[1];
-        material.specularMap = tex[2];
-        material.normalMap = tex[3];
+        if (!tex.empty()) {
+            material.ambientMap = tex[0];
+            material.diffuseMap = tex[1];
+            material.specularMap = tex[2];
+            material.normalMap = tex[3];
+        }
     }
 
     void delpos(const vec3 &delta, const glm::mat4 *mat = nullptr) {

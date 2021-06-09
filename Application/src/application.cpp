@@ -85,10 +85,9 @@ int main(int argc, char *argv[]) {
     glfwSetCursorPosCallback(mainWin, cursor_position_callback);
     glfwSetKeyCallback(mainWin, key_callback);
 
-    int height, width;
-    glfwGetFramebufferSize(mainWin, &width, &height);
+    glfwGetFramebufferSize(mainWin, &winWIDTH, &winHEIGHT);
 
-    aspect_ratio = width / height;
+    aspect_ratio = winWIDTH / winHEIGHT;
 
     // std::cout << glGetString(GL_VERSION) << std::endl;
     auto glversion = glGetString(GL_VERSION);
@@ -117,87 +116,21 @@ int main(int argc, char *argv[]) {
         mainScene.pointLights[0].setmodel(lamp);
         mainScene.skybox = resPath + "/skybox";
 
-        // auto cyborg = mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
-        // auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
+        auto cyborg = mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
+        auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
         // auto hammer = mainScene.loadModel(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
 
         // hammer->delpos(vec3(0, 5, -3));
         // hammer->setScale(vec3(0.5));
 
-        // nanosuit->delpos(vec3(3, 0, 0));
-        // nanosuit->setRotation(vec3(90, 0, 0));
-        // cyborg->delpos(vec3(-3, 0, 0));
-        // cyborg->setScale(vec3(3));
-        // nanosuit->setScale(vec3(0.9));
+        nanosuit->delpos(vec3(3, 0, 3));
+        cyborg->delpos(vec3(-3, 1, 0));
+        cyborg->setScale(vec3(3));
+        nanosuit->setScale(vec3(0.9));
 
         auto colorCube = mainScene.loadModel(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color");
-
-        auto glass = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "glass_cube");
-         glass->meshes[0]->delpos(-1);
-         glass->meshes[0]->setScale(vec3(1, 1, 0.05));
-
-        // drawable<Vertex> side_z, side_not_z, frame;
-        // int i = 0;
-        // for (int i = 0; i < cube::pos.size(); i += 3) {
-        //     auto v1 = cube::pos[i];
-        //     auto v2 = cube::pos[i + 1];
-        //     auto v3 = cube::pos[i + 2];
-        //     vec3 normal;
-        //     if (v1.x == v2.x && v2.x == v3.x) {
-        //         normal = vec3(v1.x, 0, 0);
-        //     } else if (v1.y == v2.y && v2.y == v3.y) {
-        //         normal = vec3(0, v1.y, 0);
-        //     } else
-        //         normal = vec3(0, 0, v1.z);
-        //     normal = vec3::normalize(normal);
-        //     // auto gen_normal = -vec3::cross(v1 - v2, v1 - v3);
-        //     // if (gen_normal != normal) {
-        //     //     DEBUG_BREAK;
-        //     // }
-        //     // normal = gen_normal;
-        //     if (normal.z == -1) {
-        //         side_z.m_vertices.emplace_back(v1, normal);
-        //         side_z.m_vertices.emplace_back(v2, normal);
-        //         side_z.m_vertices.emplace_back(v3, normal);
-        //         int p = side_z.m_indices.empty() ? 0 : side_z.m_indices.back() + 1;
-        //         side_z.m_indices.push_back(p);
-        //         side_z.m_indices.push_back(p + 1);
-        //         side_z.m_indices.push_back(p + 2);
-        //     } else if (normal.z == 1) {
-        //         side_not_z.m_vertices.emplace_back(v1, normal);
-        //         side_not_z.m_vertices.emplace_back(v2, normal);
-        //         side_not_z.m_vertices.emplace_back(v3, normal);
-        //         int p = side_not_z.m_indices.empty() ? 0 : side_not_z.m_indices.back() + 1;
-        //         side_not_z.m_indices.push_back(p);
-        //         side_not_z.m_indices.push_back(p + 1);
-        //         side_not_z.m_indices.push_back(p + 2);
-        //     } else {
-        //         frame.m_vertices.emplace_back(v1, normal);
-        //         frame.m_vertices.emplace_back(v2, normal);
-        //         frame.m_vertices.emplace_back(v3, normal);
-        //         int p = frame.m_indices.empty() ? 0 : frame.m_indices.back() + 1;
-        //         frame.m_indices.push_back(p);
-        //         frame.m_indices.push_back(p + 1);
-        //         frame.m_indices.push_back(p + 2);
-        //     }
-        // }
-        // frame.name = "frame";
-        // side_z.name = "side_z";
-        // side_not_z.name = "side_not_z";
-        // frame.shader = side_not_z.shader = side_z.shader = "cube_final2";
-        // frame.delpos(-2);
-        // side_z.delpos(-2);
-        // side_z.delpos(vec3(0, 0, -1));
-        // side_not_z.delpos(-2);
-        // side_not_z.delpos(vec3(0, 0, 1));
-        // Model::meshes_loaded["frame"] = frame;
-        // Model::meshes_loaded["side_z"] = side_z;
-        // Model::meshes_loaded["side_not_z"] = side_not_z;
-        // node trans;
-        // trans.meshes.push_back(&Model::meshes_loaded["frame"]);
-        // trans.meshes.push_back(&Model::meshes_loaded["side_z"]);
-        // trans.meshes.push_back(&Model::meshes_loaded["side_not_z"]);
-        // mainScene.nodes["trans"] = &trans;
+        colorCube->delpos(vec3(-5, 3, 3));
+        auto trans = mainScene.loadModel(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
 
         renderer mainRend;
         mainRend.currentScene = &mainScene;
@@ -232,14 +165,14 @@ int main(int argc, char *argv[]) {
         double LastFrame = 0;
         float shininess = 32, amb = 0.1, diff = 1.0;
         float newshininess = shininess, newamb = amb, newdiff = diff;
+        GLint m_viewport[4];
+
         while (!(glfwWindowShouldClose(imguiWin) || glfwWindowShouldClose(mainWin))) {
             glfwMakeContextCurrent(mainWin);
             glfwPollEvents();
             processHoldEvent(mainWin);
             mainScene.deltatime = glfwGetTime() - LastFrame;
             LastFrame = glfwGetTime();
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             rotation = {glm::rotate(
                 glm::rotate(glm::rotate(glm::mat4(1.0), glm::radians(rotate.z),
@@ -260,7 +193,6 @@ int main(int argc, char *argv[]) {
 
             projpersp = glm::perspective(glm::radians(mainScene.cam.FOV), aspect_ratio, near_point, far_point);
 
-            mainRend.clear();
             mainRend.Draw();
 
             glfwSwapBuffers(mainWin);
@@ -275,6 +207,7 @@ int main(int argc, char *argv[]) {
 
                 {
                     ImGui::Begin("Controls");
+                    ImGui::Checkbox("render deth: ", &mainRend.enable_shadows);
 
                     ImGui::SliderFloat3("translate", &translate.x, -5.0f, 2.0f);
 
@@ -283,9 +216,9 @@ int main(int argc, char *argv[]) {
                     // ImGui::SliderFloat3("color", &lightColor.x, 0.0f, 1.0f);
                     // ImGui::SliderFloat("near point", &near_point, 0.0f, 5.0f);
                     ImGui::SliderFloat3("ambientLight color", &mainScene.ambientLight.x, 0.0f, 1.0f);
-                    vec3 color = mainScene.pointLights[selected_light].getColor();
+                    vec3 color = mainScene.pointLights[selected_light].get_diffuse_color();
                     ImGui::SliderFloat3("pointLight color diffused", &color.x, 0.0f, 1.0f);
-                    if (color != mainScene.pointLights[selected_light].getColor()) {
+                    if (color != mainScene.pointLights[selected_light].get_diffuse_color()) {
                         mainScene.pointLights[selected_light].setColor(color);
                     }
                     ImGui::SliderFloat("pointLight intensity", &mainScene.pointLights[selected_light].intensity, 0.f, 5.f);
@@ -326,6 +259,7 @@ int main(int argc, char *argv[]) {
                     ImGui::End();
 
                     ImGui::Begin("Information");
+
                     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
                     ImGui::Text("aspect Ratio : %f", aspect_ratio);

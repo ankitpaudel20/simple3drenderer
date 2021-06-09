@@ -7,15 +7,16 @@ class Shader {
   private:
     std::string m_vertex;
     std::string m_fragment;
+    std::string m_geometry;
     std::string m_path;
     std::string m_vertpath;
     std::string m_fragpath;
+    std::string m_geopath;
     std::unordered_map<std::string, int> m_UniformLocationCache;
 
     static void getstring(const std::string &path, std::string &buffer) {
         FILE *filePointer;
         char c;
-        int c_count = 0;
 
 #ifdef _MSC_VER
         fopen_s(&filePointer, path.c_str(), "r");
@@ -27,12 +28,6 @@ class Shader {
             DEBUG_BREAK;
             assert(false);
         } else {
-            while ((c = fgetc(filePointer)) != EOF) {
-                c_count++;
-            }
-            buffer.reserve(c_count);
-            fseek(filePointer, 0, SEEK_SET);
-
             while ((c = fgetc(filePointer)) != EOF)
                 buffer.push_back(c);
 
@@ -44,9 +39,14 @@ class Shader {
         unsigned int programID = glCreateProgram();
         unsigned vs = CompileShader(GL_VERTEX_SHADER, m_vertex);
         unsigned fs = CompileShader(GL_FRAGMENT_SHADER, m_fragment);
+        uint32_t gs;
+        if (!m_geometry.empty())
+            gs = CompileShader(GL_GEOMETRY_SHADER, m_geometry);
 
         glAttachShader(programID, vs);
         glAttachShader(programID, fs);
+        if (!m_geometry.empty())
+            glAttachShader(programID, gs);
         glLinkProgram(programID);
 
         int link_status;
@@ -193,11 +193,15 @@ class Shader {
         }
     }
 
-    void setshader2(const std::string &vert, const std::string &frag) {
+    void setshader2(const std::string &vert, const std::string &frag, const std::string &geo = std::string()) {
         m_vertpath = vert;
         m_fragpath = frag;
         getstring(vert, m_vertex);
         getstring(frag, m_fragment);
+        if (!geo.empty()) {
+            m_geopath = geo;
+            getstring(geo, m_geometry);
+        }
     }
 
   public:
@@ -227,13 +231,18 @@ class Shader {
         if (!different) {
             setshader(path);
         } else {
-            setshader2(path + ".vert", path + ".frag");
+            bool geoexists = false;
+            if (FILE *file = fopen((path + ".geom").c_str(), "r")) {
+                fclose(file);
+                geoexists = true;
+            }
+            setshader2(path + ".vert", path + ".frag", geoexists ? path + ".geom" : std::string());
         }
         id = CreateShader();
     }
 
-    Shader(const std::string &vert, const std::string &frag) : m_path(vert), id(0) {
-        setshader2(vert, frag);
+    Shader(const std::string &vert, const std::string &frag, const std::string &geo = std::string()) : m_path(vert), id(0) {
+        setshader2(vert, frag, geo);
         id = CreateShader();
     }
 

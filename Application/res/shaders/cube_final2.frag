@@ -17,10 +17,13 @@ struct pointLight {
     vec3 position;
     float intensity;
     vec3 diffuseColor;
+    vec3 ambientColor;
 
     float constant;
     float linear;
     float quadratic;
+
+    samplerCube depthMap;
 };
 
 struct DirLight {
@@ -60,9 +63,11 @@ uniform int activePointLights;
 uniform vec3 camPos;
 uniform Material material;
 uniform DirLight dirLight;
-uniform pointLight pointLights[50];
+uniform pointLight pointLights[5];
 uniform vec3 ambientLight;
 uniform int doLightCalculations;
+uniform float shadow_farplane;
+uniform bool enable_shadows;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffuseColor);
 vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor);
@@ -94,46 +99,59 @@ void main() {
     final_color = vec4(result, 1);
 }
 
-vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor) {
-    vec3 lightDir = normalize(light.position - fragPos);
+float ShadowCalculation(vec3 fragPos, pointLight light) {
+    // get vector between fragment position and light position
 
-    vec3 halfwayDir = normalize(lightDir + viewDir);
+    vec3 fragToLight = fragPos - light.position;
+
+    // ise the fragment to light vector to sample from the depth map
+
+    float closestDepth = texture(light.depthMap, fragToLight).r;
+
+    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
+    closestDepth *= shadow_farplane;
+    // now get current linear depth as the length between the fragment and light position
+    float currentDepth = length(fragToLight);
+    // test for shadows
+    float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    // display closestDepth as debug (to visualize depth cubemap)
+    // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
+
+    return shadow;
+}
+
+vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor) {
+
+    vec3 lightDir = normalize(light.position - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
 
-    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
 
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    vec3 ambientMap = vec3(texture(material.ambientMap, f_texCoord));
-    if (ambientMap == vec3(0)) {
-        ambientMap = diffuseColor;
+    vec3 ambientColor = vec3(texture(material.ambientMap, f_texCoord));
+    if (ambientColor == vec3(0)) {
+        ambientColor = diffuseColor;
+    }
+    vec3 specularColor = vec3(texture(material.specularMap, f_texCoord));
+    if (specularColor == vec3(0)) {
+        specularColor = vec3(1);
     }
 
-    vec3 ambient = attenuation * light.intensity * ambientLight * material.ambientStrength * ambientMap;
+    vec3 ambient = attenuation * light.intensity * light.ambientColor * material.ambientStrength * ambientColor;
     vec3 diffuse = attenuation * light.intensity * light.diffuseColor * material.diffuseStrength * diff * diffuseColor;
-    vec3 specular = attenuation * light.intensity * light.diffuseColor * material.specularStrength * spec * material.specularColor * vec3(texture(material.specularMap, f_texCoord));
-
-    return (ambient + diffuse + specular);
-}
-
-vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor) {
-    vec3 lightDir = -normalize(fragPos - light.position);
-
-    float diff = max(dot(normal, lightDir), 0.0);
-
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-
-    float distance = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
-
-    vec3 ambient = attenuation * light.intensity * ambientLight * material.ambientStrength * vec3(1.0, 0.0, 0.0);
-    vec3 diffuse = attenuation * light.intensity * light.diffuseColor * material.diffuseStrength * diff * vec3(1.0, 0.0, 0.0);
-    vec3 specular = attenuation * light.intensity * light.diffuseColor * material.specularStrength * spec * material.specularColor * vec3(1.0, 1.0, 1.0);
-    return (ambient + diffuse + specular);
+    vec3 specular = attenuation * light.intensity * light.diffuseColor * material.specularStrength * spec * material.specularColor * specularColor;
+    if (enable_shadows) {
+        float shadow = ShadowCalculation(fragPos, light);
+        return (ambient + (1.0 - shadow) * (diffuse + specular));
+    } else
+        return (ambient + diffuse + specular);
+    // float shadow = ShadowCalculation(fragPos, light);
+    // return (ambient + (1.0 - shadow) * (diffuse + specular));
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffuseColor) {

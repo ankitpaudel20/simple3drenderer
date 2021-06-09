@@ -142,10 +142,15 @@ class skyBox {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void draw(Shader *shader, const glm::mat3 &view, glm::mat4 &projection) {
+    void draw(Shader *shader, const glm::mat3 &view, glm::mat4 &projection, uint32_t testCubemap = 0) {
         glm::mat4 mView(view);  // remove translation from the view matrix
         glDepthFunc(GL_LEQUAL); // change depth function so depth test passes when values are equal to depth buffer's content
-        map.bind();
+        if (testCubemap == 0) {
+            map.bind();
+        } else {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, testCubemap);
+        }
 
         shader->Bind();
         shader->SetUniform<glm::mat4 *>("view", &mView);

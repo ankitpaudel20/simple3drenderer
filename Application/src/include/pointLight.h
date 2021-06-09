@@ -4,6 +4,7 @@ struct pointLight {
   private:
     vec3 position;
     vec3 diffuseColor;
+    vec3 ambientColor = 1;
     node *model = nullptr;
 
     inline void refreshModelMatrix() {
@@ -20,7 +21,8 @@ struct pointLight {
     float linear = 0.09;
     float quadratic = 0.032;
 
-    pointLight(const vec3 &pos, const float &intensity, const vec3 &diffcol = 1) : position(pos), diffuseColor(diffcol), intensity(intensity) {}
+    pointLight(const vec3 &pos, const float &intensity, const vec3 &diffcol = 1) : position(pos), diffuseColor(diffcol), intensity(intensity) {
+    }
 
     void delpos(const vec3 &delta) {
         position += delta;
@@ -51,6 +53,7 @@ struct pointLight {
     }
 
     [[nodiscard]] inline vec3 &getpos() { return position; }
-    [[nodiscard]] inline vec3 &getColor() { return diffuseColor; }
+    [[nodiscard]] inline vec3 &get_diffuse_color() { return diffuseColor; }
+    [[nodiscard]] inline vec3 &get_ambient_color() { return ambientColor; }
     [[nodiscard]] inline node *&getModel() { return model; }
 };

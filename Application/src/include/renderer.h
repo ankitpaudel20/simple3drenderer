@@ -25,6 +25,10 @@ static std::unordered_map<std::string, Shader> shadersLoaded;
 
 class renderer {
     std::vector<entity> entities;
+    std::vector<uint32_t> depthfbo, depthCubemap;
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    float shadow_near_plane = 0.1f;
+    float shadow_farplane = 25.0f;
 
     skyBox *skybox = nullptr;
 
@@ -66,6 +70,7 @@ class renderer {
   public:
     scene *currentScene;
     std::string resPath;
+    bool enable_shadows = true;
 
     void init() {
         resPath = searchRes();
@@ -77,16 +82,81 @@ class renderer {
         for (auto &n : currentScene->nodes) {
             processNode(n.second);
         }
+        for (size_t i = 0; i < currentScene->pointLights.size(); i++) {
+            depthfbo.push_back(0);
+            glGenFramebuffers(1, &depthfbo.back());
+            depthCubemap.push_back(0);
+            glGenTextures(1, &depthCubemap.back());
+            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap.back());
+            for (unsigned int i = 0; i < 6; ++i)
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glBindFramebuffer(GL_FRAMEBUFFER, depthfbo.back());
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap.back(), 0);
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            /* code */
+        }
+        shadersLoaded["point_light_shadow"] = Shader(resPath + "/shaders/point_shadows_depth", true);
     }
 
     inline void clear() { (glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)); }
 
     inline void swapBuffers(GLFWwindow *win) { glfwSwapBuffers(win); }
 
+    void renderDepthmap() {
+
+        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, shadow_near_plane, shadow_farplane);
+        // shadowTransforms.reserve(4);
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        auto &lights = currentScene->pointLights;
+        auto &shader = shadersLoaded["point_light_shadow"];
+        shader.Bind();
+        std::vector<glm::mat4> shadowTransforms;
+        for (size_t i = 0; i < lights.size(); i++) {
+
+            shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(1.0f, 0.0f, 0.0f)), glm::vec3(0.0f, -1.0f, 0.0f)));
+            shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(-1.0f, 0.0f, 0.0f)), glm::vec3(0.0f, -1.0f, 0.0f)));
+            shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(0.0f, 1.0f, 0.0f)), glm::vec3(0.0f, 0.0f, 1.0f)));
+            shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(0.0f, -1.0f, 0.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
+            shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(0.0f, 0.0f, 1.0f)), glm::vec3(0.0f, -1.0f, 0.0f)));
+            shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(0.0f, 0.0f, -1.0f)), glm::vec3(0.0f, -1.0f, 0.0f)));
+            glBindFramebuffer(GL_FRAMEBUFFER, depthfbo[i]);
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            for (unsigned int i = 0; i < 6; ++i)
+                shader.SetUniform<glm::mat4 *>(("shadowMatrices[" + std::to_string(i) + "]").c_str(), &shadowTransforms[i]);
+            shader.SetUniform<float>("far_plane", shadow_farplane);
+            shader.SetUniform<vec3>("lightPos", lights[i].getpos());
+
+            for (auto &entity : entities) {
+                if (entity.mesh->draw) {
+                    entity.vao.Bind();
+                    shader.SetUniform<glm::mat4 *>("model", &entity.mesh->matModel);
+                    glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
+                }
+            }
+            shadowTransforms.clear();
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, winWIDTH, winHEIGHT);
+    }
+
     void Draw() {
+        clear();
+        if (enable_shadows) {
+            renderDepthmap();
+        }
+
         auto view = glm::lookAt(currentScene->cam.Camera_Position, currentScene->cam.Camera_Position + currentScene->cam.Camera_Facing_Direction * currentScene->cam.Camera_Target_distance, currentScene->cam.Camera_Up);
 
         auto projpersp = glm::perspective(glm::radians(currentScene->cam.FOV), aspect_ratio, currentScene->cam.nearPoint, currentScene->cam.farPoint);
+        auto viewProj = projpersp * view;
         Shader *shader;
 
         for (auto &entity : entities) {
@@ -97,11 +167,12 @@ class renderer {
 
                 shader->Bind();
                 shader->SetUniform<glm::mat4 *>("model", &entity.mesh->matModel);
-                shader->SetUniform<glm::mat4 *>("view", &view);
-                shader->SetUniform<glm::mat4 *>("proj", &projpersp);
+                shader->SetUniform<glm::mat4 *>("viewProj", &viewProj);
 
                 if (entity.mesh->shader == "cube_final2") {
+                    shader->SetUniform<vec3>("camPos", currentScene->cam.Camera_Position);
                     shader->SetUniform<vec3>("ambientLight", currentScene->ambientLight);
+                    uint32_t sampler_counter = 0;
 
                     shader->SetUniform<int>("doLightCalculations", entity.mesh->doLightCalculations);
                     if (entity.mesh->doLightCalculations) {
@@ -125,7 +196,10 @@ class renderer {
                             shader->SetUniform<float>(lightString.c_str(), light.intensity);
                             lightString.erase(place);
                             lightString.append("diffuseColor");
-                            shader->SetUniform<vec3>(lightString.c_str(), light.getColor());
+                            shader->SetUniform<vec3>(lightString.c_str(), light.get_diffuse_color());
+                            lightString.erase(place);
+                            lightString.append("ambientColor");
+                            shader->SetUniform<vec3>(lightString.c_str(), light.get_ambient_color());
                             lightString.erase(place);
                             lightString.append("constant");
                             shader->SetUniform<float>(lightString.c_str(), light.constant);
@@ -135,15 +209,18 @@ class renderer {
                             lightString.erase(place);
                             lightString.append("quadratic");
                             shader->SetUniform<float>(lightString.c_str(), light.quadratic);
-                            i++;
-                            /* code */
-                        }
-                    }
 
-                    entity.ambient->Bind(0);
-                    entity.diffuse->Bind(1);
-                    entity.specular->Bind(2);
-                    entity.normal->Bind(3);
+                            glActiveTexture(GL_TEXTURE0 + sampler_counter);
+                            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap[i]);
+                            lightString.erase(place);
+                            lightString.append("depthMap");
+                            shader->SetUniform<int>(lightString.c_str(), sampler_counter++);
+                            i++;
+                        }
+
+                        shader->SetUniform<float>("shadow_farplane", shadow_farplane);
+                        shader->SetUniform<int>("enable_shadows", enable_shadows);
+                    }
 
                     shader->SetUniform<float>("material.shininess", entity.mesh->material.shininess);
                     shader->SetUniform<vec3>("material.specularColor", entity.mesh->material.specularColor);
@@ -151,10 +228,14 @@ class renderer {
                     shader->SetUniform<float>("material.ambientStrength", entity.mesh->material.AmbientStrength);
                     shader->SetUniform<float>("material.diffuseStrength", entity.mesh->material.DiffuseStrength);
                     shader->SetUniform<float>("material.specularStrength", entity.mesh->material.SpecularStrength);
-                    shader->SetUniform<int>("material.ambientMap", 0);
-                    shader->SetUniform<int>("material.diffuseMap", 1);
-                    shader->SetUniform<int>("material.specularMap", 2);
-                    shader->SetUniform<int>("material.normalMap", 3);
+                    entity.ambient->Bind(sampler_counter);
+                    shader->SetUniform<int>("material.ambientMap", sampler_counter++);
+                    entity.diffuse->Bind(sampler_counter);
+                    shader->SetUniform<int>("material.diffuseMap", sampler_counter++);
+                    entity.specular->Bind(sampler_counter);
+                    shader->SetUniform<int>("material.specularMap", sampler_counter++);
+                    entity.normal->Bind(sampler_counter);
+                    shader->SetUniform<int>("material.normalMap", sampler_counter++);
 
                     glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
                 }
@@ -176,6 +257,12 @@ class renderer {
         }
         for (auto &i : texturesLoaded) {
             i.second.free();
+        }
+        for (auto &i : depthfbo) {
+            glDeleteFramebuffers(1, &i);
+        }
+        for (auto &i : depthCubemap) {
+            glDeleteTextures(1, &i);
         }
 
         delete skybox;

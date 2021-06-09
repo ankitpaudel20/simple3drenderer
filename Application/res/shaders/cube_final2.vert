@@ -12,11 +12,10 @@ out vec3 f_tangent;
 out vec3 f_bitangent;
 
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
+uniform mat4 viewProj;
 
 void main() {
-  gl_Position = proj * view * model * v_position;
+  gl_Position = viewProj * model * v_position;
 
   f_position = (model * v_position).xyz;
   f_normal = mat3(transpose(inverse(model))) * v_normal;
