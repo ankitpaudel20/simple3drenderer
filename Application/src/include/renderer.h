@@ -162,7 +162,6 @@ class renderer {
         for (auto &entity : entities) {
             if (entity.mesh->draw) {
 
-                entity.vao.Bind();
                 shader = entity.shader;
 
                 shader->Bind();
@@ -172,7 +171,22 @@ class renderer {
                 if (entity.mesh->shader == "cube_final2") {
                     shader->SetUniform<vec3>("camPos", currentScene->cam.Camera_Position);
                     shader->SetUniform<vec3>("ambientLight", currentScene->ambientLight);
-                    uint32_t sampler_counter = 0;
+                    uint32_t sampler_counter = 1;
+
+                    shader->SetUniform<float>("material.shininess", entity.mesh->material.shininess);
+                    shader->SetUniform<vec3>("material.specularColor", entity.mesh->material.specularColor);
+                    shader->SetUniform<vec3>("material.diffuseColor", entity.mesh->material.diffuseColor);
+                    shader->SetUniform<float>("material.ambientStrength", entity.mesh->material.AmbientStrength);
+                    shader->SetUniform<float>("material.diffuseStrength", entity.mesh->material.DiffuseStrength);
+                    shader->SetUniform<float>("material.specularStrength", entity.mesh->material.SpecularStrength);
+                    entity.ambient->Bind(sampler_counter);
+                    shader->SetUniform<int>("material.ambientMap", sampler_counter++);
+                    entity.diffuse->Bind(sampler_counter);
+                    shader->SetUniform<int>("material.diffuseMap", sampler_counter++);
+                    entity.specular->Bind(sampler_counter);
+                    shader->SetUniform<int>("material.specularMap", sampler_counter++);
+                    entity.normal->Bind(sampler_counter);
+                    shader->SetUniform<int>("material.normalMap", sampler_counter++);
 
                     shader->SetUniform<int>("doLightCalculations", entity.mesh->doLightCalculations);
                     if (entity.mesh->doLightCalculations) {
@@ -221,22 +235,7 @@ class renderer {
                         shader->SetUniform<float>("shadow_farplane", shadow_farplane);
                         shader->SetUniform<int>("enable_shadows", enable_shadows);
                     }
-
-                    shader->SetUniform<float>("material.shininess", entity.mesh->material.shininess);
-                    shader->SetUniform<vec3>("material.specularColor", entity.mesh->material.specularColor);
-                    shader->SetUniform<vec3>("material.diffuseColor", entity.mesh->material.diffuseColor);
-                    shader->SetUniform<float>("material.ambientStrength", entity.mesh->material.AmbientStrength);
-                    shader->SetUniform<float>("material.diffuseStrength", entity.mesh->material.DiffuseStrength);
-                    shader->SetUniform<float>("material.specularStrength", entity.mesh->material.SpecularStrength);
-                    entity.ambient->Bind(sampler_counter);
-                    shader->SetUniform<int>("material.ambientMap", sampler_counter++);
-                    entity.diffuse->Bind(sampler_counter);
-                    shader->SetUniform<int>("material.diffuseMap", sampler_counter++);
-                    entity.specular->Bind(sampler_counter);
-                    shader->SetUniform<int>("material.specularMap", sampler_counter++);
-                    entity.normal->Bind(sampler_counter);
-                    shader->SetUniform<int>("material.normalMap", sampler_counter++);
-
+                    entity.vao.Bind();
                     glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
                 }
             }

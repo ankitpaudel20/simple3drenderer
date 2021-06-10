@@ -1,4 +1,4 @@
-#version 330 core
+#version 440 core
 
 struct Material {
     sampler2D ambientMap;
@@ -142,7 +142,7 @@ vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
         specularColor = vec3(1);
     }
 
-    vec3 ambient = attenuation * light.intensity * light.ambientColor * material.ambientStrength * ambientColor;
+    vec3 ambient = attenuation * light.intensity * light.ambientColor * material.ambientStrength * diffuseColor;
     vec3 diffuse = attenuation * light.intensity * light.diffuseColor * material.diffuseStrength * diff * diffuseColor;
     vec3 specular = attenuation * light.intensity * light.diffuseColor * material.specularStrength * spec * material.specularColor * specularColor;
     if (enable_shadows) {
@@ -150,6 +150,7 @@ vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
         return (ambient + (1.0 - shadow) * (diffuse + specular));
     } else
         return (ambient + diffuse + specular);
+    // return (diffuseColor);
     // float shadow = ShadowCalculation(fragPos, light);
     // return (ambient + (1.0 - shadow) * (diffuse + specular));
 }

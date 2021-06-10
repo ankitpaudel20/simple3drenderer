@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef MDEBUG
@@ -116,17 +116,17 @@ int main(int argc, char *argv[]) {
         mainScene.pointLights[0].setmodel(lamp);
         mainScene.skybox = resPath + "/skybox";
 
-        auto cyborg = mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
-        auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
+        // auto cyborg = mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
+        // auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
         // auto hammer = mainScene.loadModel(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
 
         // hammer->delpos(vec3(0, 5, -3));
         // hammer->setScale(vec3(0.5));
 
-        nanosuit->delpos(vec3(3, 0, 3));
-        cyborg->delpos(vec3(-3, 1, 0));
-        cyborg->setScale(vec3(3));
-        nanosuit->setScale(vec3(0.9));
+        // nanosuit->delpos(vec3(3, 0, 3));
+        // cyborg->delpos(vec3(-3, 1, 0));
+        // cyborg->setScale(vec3(3));
+        // nanosuit->setScale(vec3(0.9));
 
         auto colorCube = mainScene.loadModel(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color");
         colorCube->delpos(vec3(-5, 3, 3));

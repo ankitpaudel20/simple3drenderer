@@ -18,8 +18,7 @@ int winHEIGHT, winWIDTH;
 unsigned selected_light = 0;
 
 void APIENTRY
-glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message,
-              const void *userParam) {
+glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam) {
     // ignore non-significant error/warning codes
     if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
         return;
@@ -83,20 +82,24 @@ glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsi
     switch (severity) {
     case GL_DEBUG_SEVERITY_HIGH:
         std::cout << "Severity: high";
+        DEBUG_BREAK;
         break;
     case GL_DEBUG_SEVERITY_MEDIUM:
         std::cout << "Severity: medium";
+        DEBUG_BREAK;
         break;
     case GL_DEBUG_SEVERITY_LOW:
         std::cout << "Severity: low";
+        DEBUG_BREAK;
         break;
     case GL_DEBUG_SEVERITY_NOTIFICATION:
         std::cout << "Severity: notification";
         break;
+    default:
+        std::cout << "Severity: unknown";
     }
     std::cout << std::endl;
     std::cout << std::endl;
-    DEBUG_BREAK;
 }
 
 static void cursor_position_callback(GLFWwindow *window, double x, double y) {

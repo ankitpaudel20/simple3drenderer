@@ -8,7 +8,7 @@
 #define OPENGL_CORE_MATERIAL_H
 
 struct Material {
-    float AmbientStrength = 0.9;
+    float AmbientStrength = 0.7;
     float DiffuseStrength = 1;
     float SpecularStrength = 1;
     vec3 specularColor = vec3(1);
