@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    glfwSwapInterval(1);
+    // glfwSwapInterval(1);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    glfwSwapInterval(1);
+    // glfwSwapInterval(1);
 
 #ifdef MDEBUG
     int flags;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     auto glrenderer = glGetString(GL_RENDERER);
     auto glvendor = glGetString(GL_VENDOR);
     glEnable(GL_MULTISAMPLE);
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     (glEnable(GL_DEPTH_TEST));
@@ -130,7 +130,9 @@ int main(int argc, char *argv[]) {
 
         auto colorCube = mainScene.loadModel(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color");
         colorCube->delpos(vec3(-5, 3, 3));
-        auto trans = mainScene.loadModel(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
+        // auto trans = mainScene.loadModel(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
+        auto sponza = mainScene.loadModel(resPath + "/3dModels/sponza/sponza.obj", "cube_final2", "sponza");
+        sponza->setScale(0.03);
 
         renderer mainRend;
         mainRend.currentScene = &mainScene;

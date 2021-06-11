@@ -184,23 +184,28 @@ void processHoldEvent(GLFWwindow *window) {
     const float cameraSpeed = s.cam.speed * s.deltatime;
     vec3 left = glm::cross(s.cam.Camera_Up, s.cam.Camera_Facing_Direction);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         s.cam.Camera_Position += cameraSpeed * s.cam.Camera_Facing_Direction;
+    }
 
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        s.cam.Camera_Position -=
-            cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        s.cam.Camera_Position -= cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         s.cam.Camera_Position -= cameraSpeed * s.cam.Camera_Facing_Direction;
+    }
 
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        s.cam.Camera_Position +=
-            cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        s.cam.Camera_Position += cameraSpeed * glm::normalize(glm::cross(s.cam.Camera_Facing_Direction, s.cam.Camera_Up));
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+
         s.cam.Camera_Position += cameraSpeed * s.cam.Camera_Up;
+    }
 
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
         s.cam.Camera_Position -= cameraSpeed * s.cam.Camera_Up;
+    }
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         s.pointLights[selected_light].delpos(vec3((0.05 * s.cam.Camera_Facing_Direction.x), (0.05 * s.cam.Camera_Facing_Direction.y), (0.05 * s.cam.Camera_Facing_Direction.z)));
@@ -225,6 +230,7 @@ void processHoldEvent(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS) {
         s.pointLights[selected_light].delpos(vec3(-0.05 * s.cam.Camera_Up.x, -0.05 * s.cam.Camera_Up.y, -0.05 * s.cam.Camera_Up.z));
     }
+    s.pointLights[0].setpos(s.cam.Camera_Position);
 }
 
 std::string searchRes() {

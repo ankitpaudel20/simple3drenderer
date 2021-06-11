@@ -87,6 +87,8 @@ void main() {
         diffColor *= tex;
     }
 
+    // norm = normalize(vec3(texture(material.normalMap, f_texCoord)));
+
     if (doLightCalculations == 1) {
         for (int i = 0; i < activePointLights; i++) {
             result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor);
@@ -96,6 +98,7 @@ void main() {
     } else
         result += diffColor;
 
+    // result = vec3(texture(material.normalMap, f_texCoord));
     final_color = vec4(result, 1);
 }
 
@@ -138,9 +141,9 @@ vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
         ambientColor = diffuseColor;
     }
     vec3 specularColor = vec3(texture(material.specularMap, f_texCoord));
-    if (specularColor == vec3(0)) {
-        specularColor = vec3(1);
-    }
+    // if (specularColor == vec3(0)) {
+    //     specularColor = vec3(1);
+    // }
 
     vec3 ambient = attenuation * light.intensity * light.ambientColor * material.ambientStrength * diffuseColor;
     vec3 diffuse = attenuation * light.intensity * light.diffuseColor * material.diffuseStrength * diff * diffuseColor;

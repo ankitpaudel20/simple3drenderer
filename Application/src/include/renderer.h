@@ -26,9 +26,9 @@ static std::unordered_map<std::string, Shader> shadersLoaded;
 class renderer {
     std::vector<entity> entities;
     std::vector<uint32_t> depthfbo, depthCubemap;
-    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    const unsigned int SHADOW_WIDTH = 1920, SHADOW_HEIGHT = 1920;
     float shadow_near_plane = 0.1f;
-    float shadow_farplane = 25.0f;
+    float shadow_farplane = 125.0f;
 
     skyBox *skybox = nullptr;
 
@@ -197,7 +197,7 @@ class renderer {
                         shader->SetUniform<int>("activePointLights", currentScene->pointLights.size());
 
                         std::string lightString = "pointLights[";
-                        int i = 0;
+                        int i = 1;
 
                         for (auto &light : currentScene->pointLights) {
                             lightString += std::to_string(i);

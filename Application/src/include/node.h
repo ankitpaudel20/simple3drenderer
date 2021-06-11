@@ -5,6 +5,7 @@ struct node {
     //uint32_t nosChildren=0;
     std::map<std::string, node> children;
     std::vector<drawable<Vertex> *> meshes;
+    glm::mat4 matModel = glm::mat4(1.0);
 
     void delpos(const vec3 &delta) {
 
@@ -32,4 +33,9 @@ struct node {
         for (auto &child : children)
             child.second.setRotation(rotate);
     }
+
+  private:
+    glm::mat4 scaling = glm::mat4(1.0);
+    glm::mat4 translation = glm::mat4(1.0);
+    glm::mat4 rotation = glm::mat4(1.0)
 };
