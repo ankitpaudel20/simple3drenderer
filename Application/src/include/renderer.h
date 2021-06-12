@@ -1,4 +1,5 @@
 #include <unordered_map>
+#include <list>
 
 #include "Texture.h"
 #include "Vertexarray.h"
@@ -24,7 +25,7 @@ static std::unordered_map<std::string, Texture> texturesLoaded;
 static std::unordered_map<std::string, Shader> shadersLoaded;
 
 class renderer {
-    std::vector<entity> entities;
+    std::list<entity> entities;
     std::vector<uint32_t> depthfbo, depthCubemap;
     const unsigned int SHADOW_WIDTH = 1920, SHADOW_HEIGHT = 1920;
     float shadow_near_plane = 0.1f;
@@ -60,6 +61,7 @@ class renderer {
             temp.specular = &texturesLoaded[mesh->material.specularMap];
             temp.normal = &texturesLoaded[mesh->material.normalMap];
             entities.push_back(temp);
+            mesh->gpuInstance = &entities.back();
         }
 
         for (auto &i : node->children) {
@@ -71,6 +73,7 @@ class renderer {
     scene *currentScene;
     std::string resPath;
     bool enable_shadows = true;
+    bool enable_normals = true;
 
     void init() {
         resPath = searchRes();
@@ -169,6 +172,8 @@ class renderer {
                 shader->SetUniform<glm::mat4 *>("viewProj", &viewProj);
 
                 if (entity.mesh->shader == "cube_final2") {
+                    shader->SetUniform<int>("enable_normals", enable_normals);
+
                     shader->SetUniform<vec3>("camPos", currentScene->cam.Camera_Position);
                     shader->SetUniform<vec3>("ambientLight", currentScene->ambientLight);
                     uint32_t sampler_counter = 1;
@@ -190,14 +195,14 @@ class renderer {
 
                     shader->SetUniform<int>("doLightCalculations", entity.mesh->doLightCalculations);
                     if (entity.mesh->doLightCalculations) {
-                        /* shader->SetUniform<vec3>("dirLight.direction", currentScene->dirLights[0].direction);
-                        shader->SetUniform<float>("dirLight.intensity", currentScene->dirLights[0].intensity);
-                        shader->SetUniform<vec3>("dirLight.color", currentScene->dirLights[0].color);*/
+                        // shader->SetUniform<vec3>("dirLight.direction", currentScene->dirLights[0].direction);
+                        // shader->SetUniform<float>("dirLight.intensity", currentScene->dirLights[0].intensity);
+                        // shader->SetUniform<vec3>("dirLight.color", currentScene->dirLights[0].color);
 
                         shader->SetUniform<int>("activePointLights", currentScene->pointLights.size());
 
                         std::string lightString = "pointLights[";
-                        int i = 1;
+                        int i = 0;
 
                         for (auto &light : currentScene->pointLights) {
                             lightString += std::to_string(i);

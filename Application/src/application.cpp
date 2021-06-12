@@ -106,11 +106,11 @@ int main(int argc, char *argv[]) {
 
         scene mainScene;
         glfwSetWindowUserPointer(mainWin, &mainScene);
-        mainScene.pointLights.emplace_back(vec3(1), 1);
+        mainScene.pointLights.emplace_back(vec3(1), 10);
         //mainScene.dirLights.emplace_back(vec3(-1, -1, 0), 0.8, 1, 1);
         auto lamp = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light");
         for (auto &mesh : lamp->meshes) {
-            mesh->setScale(vec3(0.05));
+            mesh->setScale(vec3(0.1));
             mesh->doLightCalculations = false;
         }
         mainScene.pointLights[0].setmodel(lamp);
@@ -131,8 +131,11 @@ int main(int argc, char *argv[]) {
         auto colorCube = mainScene.loadModel(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color");
         colorCube->delpos(vec3(-5, 3, 3));
         // auto trans = mainScene.loadModel(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
+        // auto tree = mainScene.loadModel(resPath + "/3dModels/Center City Sci-Fi/Center City Sci-Fi.obj", "cube_final2", "city");
+        // tree->delpos(0.005);
         auto sponza = mainScene.loadModel(resPath + "/3dModels/sponza/sponza.obj", "cube_final2", "sponza");
         sponza->setScale(0.03);
+        // auto plane = mainScene.loadModel(resPath + "/3dModels/plane.obj", "cube_final2", "plane");
 
         renderer mainRend;
         mainRend.currentScene = &mainScene;
@@ -210,6 +213,7 @@ int main(int argc, char *argv[]) {
                 {
                     ImGui::Begin("Controls");
                     ImGui::Checkbox("render deth: ", &mainRend.enable_shadows);
+                    ImGui::Checkbox("enable normals", &mainRend.enable_normals);
 
                     ImGui::SliderFloat3("translate", &translate.x, -5.0f, 2.0f);
 
@@ -223,7 +227,7 @@ int main(int argc, char *argv[]) {
                     if (color != mainScene.pointLights[selected_light].get_diffuse_color()) {
                         mainScene.pointLights[selected_light].setColor(color);
                     }
-                    ImGui::SliderFloat("pointLight intensity", &mainScene.pointLights[selected_light].intensity, 0.f, 5.f);
+                    ImGui::SliderFloat("pointLight intensity", &mainScene.pointLights[selected_light].intensity, 0.f, 50.f);
 
                     ImGui::SliderFloat("linear term", &mainScene.pointLights[selected_light].linear, 0.001f, 0.7f);
                     ImGui::SliderFloat("quadratic term", &mainScene.pointLights[selected_light].quadratic, 0.000007f, 1.8f);
@@ -257,7 +261,8 @@ int main(int argc, char *argv[]) {
                     ImGui::SliderFloat("POV", &mainScene.cam.FOV, 0.0f, 180.0f);
                     ImGui::SliderFloat("cameraSensitivity", &mainScene.cam.sensitivity,
                                        0.0f, 3.0f);
-                    ImGui::SliderFloat("camera speed", &mainScene.cam.speed, 0.0f, 5.0f);
+                    ImGui::SliderFloat("camera speed", &mainScene.cam.speed, 0.0f, 50.0f);
+                    ImGui::SliderFloat("light Speed", &light_speed, 0.0f, 50.0f);
                     ImGui::End();
 
                     ImGui::Begin("Information");

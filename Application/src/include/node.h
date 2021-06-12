@@ -37,5 +37,5 @@ struct node {
   private:
     glm::mat4 scaling = glm::mat4(1.0);
     glm::mat4 translation = glm::mat4(1.0);
-    glm::mat4 rotation = glm::mat4(1.0)
+    glm::mat4 rotation = glm::mat4(1.0);
 };

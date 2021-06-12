@@ -93,6 +93,10 @@ struct vec3 {
         return vec3(in.x * a, in.y * a, in.z * a);
     }
 
+    friend vec3 operator*(float a, vec3 in) {
+        return vec3(in.x * a, in.y * a, in.z * a);
+    }
+
     friend vec3 operator/(const vec3 &a, const vec3 &b) {
         return vec3(a.x / b.x, a.y / b.y, a.z / b.z);
     }

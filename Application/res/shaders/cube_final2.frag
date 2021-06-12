@@ -1,4 +1,4 @@
-#version 440 core
+#version 330 core
 
 struct Material {
     sampler2D ambientMap;
@@ -54,8 +54,11 @@ struct flashLight {
 in vec3 f_position;
 in vec3 f_normal;
 in vec2 f_texCoord;
-in vec3 f_tangent;
-in vec3 f_bitangent;
+// in vec3 f_tangent;
+// in vec3 f_bitangent;
+in vec3 tangentLightPos;
+in vec3 tangentViewPos;
+in vec3 tangentFragPos;
 
 out vec4 final_color;
 
@@ -68,30 +71,44 @@ uniform vec3 ambientLight;
 uniform int doLightCalculations;
 uniform float shadow_farplane;
 uniform bool enable_shadows;
+uniform bool enable_normals;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffuseColor);
-vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor);
+vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor, vec3 tangentLightPos, vec3 tangentFragPos);
 vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor);
 
+bool has_normal;
 void main() {
+    vec3 norm;
+    has_normal = texture(material.normalMap, f_texCoord).rgb == vec3(0) ? false : true;
 
-    vec3 norm = normalize(f_normal);
-    // vec3 norm = normalize(vec3(texture(material.normalMap, f_texCoord)));
-    vec3 viewDir = normalize(camPos - f_position);
-
-    vec3 result = vec3(0);
+    if (enable_normals && has_normal) {
+        norm = texture(material.normalMap, f_texCoord).rgb;
+        norm = normalize(norm * 2.0 - 1.0);
+    } else
+        norm = normalize(f_normal);
 
     vec3 diffColor = material.diffuseColor;
     vec3 tex = vec3(texture(material.diffuseMap, f_texCoord));
+
+    vec3 viewDir;
+
+    if (enable_normals && has_normal)
+        viewDir = normalize(tangentViewPos - tangentFragPos);
+    else
+        viewDir = normalize(camPos - f_position);
+
+    vec3 result = vec3(0);
+
     if (tex != vec3(0)) {
         diffColor *= tex;
     }
 
-    // norm = normalize(vec3(texture(material.normalMap, f_texCoord)));
-
     if (doLightCalculations == 1) {
         for (int i = 0; i < activePointLights; i++) {
-            result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor);
+            // result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor);
+            // result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor, tangentLightPos, tangentFragPos);
+            result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor, tangentLightPos, tangentFragPos);
         }
 
         // result += CalcDirLight(dirLight, norm, viewDir, diffColor);
@@ -99,6 +116,10 @@ void main() {
         result += diffColor;
 
     // result = vec3(texture(material.normalMap, f_texCoord));
+    // result += CalcPointLight(pointLights[0], norm, tangentFragPos, viewDir, diffColor, tangentLightPos, tangentFragPos);
+
+    // norm = texture(material.normalMap, f_texCoord).rgb;
+    // final_color = vec4(abs(norm.x), abs(norm.y), abs(norm.z), 1);
     final_color = vec4(result, 1);
 }
 
@@ -124,9 +145,13 @@ float ShadowCalculation(vec3 fragPos, pointLight light) {
     return shadow;
 }
 
-vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor) {
+vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor, vec3 tangentLightPos, vec3 tangentFragPos) {
+    vec3 lightDir;
 
-    vec3 lightDir = normalize(light.position - fragPos);
+    if (has_normal && enable_normals)
+        lightDir = normalize(tangentLightPos - tangentFragPos);
+    else
+        lightDir = normalize(light.position - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
 
@@ -140,20 +165,26 @@ vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
     if (ambientColor == vec3(0)) {
         ambientColor = diffuseColor;
     }
+
     vec3 specularColor = vec3(texture(material.specularMap, f_texCoord));
-    // if (specularColor == vec3(0)) {
-    //     specularColor = vec3(1);
-    // }
+    if (specularColor == vec3(0)) {
+        specularColor = vec3(1);
+    }
 
     vec3 ambient = attenuation * light.intensity * light.ambientColor * material.ambientStrength * diffuseColor;
     vec3 diffuse = attenuation * light.intensity * light.diffuseColor * material.diffuseStrength * diff * diffuseColor;
     vec3 specular = attenuation * light.intensity * light.diffuseColor * material.specularStrength * spec * material.specularColor * specularColor;
+    // vec3 ambient = light.intensity * light.ambientColor * material.ambientStrength * diffuseColor;
+    // vec3 diffuse = light.intensity * light.diffuseColor * material.diffuseStrength * diff * diffuseColor;
+    // vec3 specular = light.intensity * light.diffuseColor * material.specularStrength * spec * material.specularColor * specularColor;
+    // return lightDir;
     if (enable_shadows) {
         float shadow = ShadowCalculation(fragPos, light);
         return (ambient + (1.0 - shadow) * (diffuse + specular));
+        // return (ambient + (1.0 - shadow) * (diffuse));
     } else
         return (ambient + diffuse + specular);
-    // return (diffuseColor);
+
     // float shadow = ShadowCalculation(fragPos, light);
     // return (ambient + (1.0 - shadow) * (diffuse + specular));
 }

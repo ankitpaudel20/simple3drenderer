@@ -27,31 +27,9 @@ static std::unordered_map<std::string, Mesh> meshes_loaded;
 
 // checks all material textures of a given type and loads the textures if they're not loaded yet.
 // the required info is returned as a Texture struct.
-static std::vector<std::string> loadMaterialTextures(aiMaterial *mat, aiTextureType type, const std::string &typeName) {
-    std::vector<std::string> textures;
-    for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
-        aiString str;
-        mat->GetTexture(type, i, &str);
-        //std::string path = str.C_Str();
-        // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
-        std::string relPath(str.C_Str());
-#ifndef _WIN32
-        size_t pos = 0;
-        pos = relPath.find("\\");
-        while (pos != std::string::npos) {
-            relPath.replace(pos, 1, "/");
-            pos = relPath.find("\\");
-        }
-#endif
-        textures.push_back(directory + "/" + relPath);
-    }
-    return textures;
-}
-
-// checks all material textures of a given type and loads the textures if they're not loaded yet.
-// the required info is returned as a Texture struct.
 static std::string loadMaterialTexture(aiMaterial *mat, aiTextureType type, const std::string &typeName) {
     std::vector<std::string> textures;
+
     if (mat->GetTextureCount(type) > 1) {
         printf("there were multiple textures but only single was processed\n");
         /* code */
@@ -142,19 +120,6 @@ static drawable<Vertex> *processMesh(aiMesh *mesh, const aiScene *scene) {
     // specular: texture_specularN
     // normal: texture_normalN
 
-    //		// 1. diffuse maps
-    //		std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-    //		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    //		// 2. specular maps
-    //		std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-    //		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    //		// 3. normal maps
-    //		std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_normal");
-    //		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-    //		// 4. height maps
-    //		std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_height");
-    //		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-
     // 0. ambient maps
     std::string ambientMaps = loadMaterialTexture(material, aiTextureType_AMBIENT, "texture_ambient");
     textures.push_back(ambientMaps);
@@ -167,18 +132,20 @@ static drawable<Vertex> *processMesh(aiMesh *mesh, const aiScene *scene) {
     // 3. normal maps
     std::string normalMaps = loadMaterialTexture(material, aiTextureType_HEIGHT, "texture_normal");
     textures.push_back(normalMaps);
-    aiColor4D diffuse;
+    aiColor4D diffuse, specular;
     if (AI_SUCCESS != aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
-        printf("color not found\n");
+        printf("diffuese color not found\n");
+    if (AI_SUCCESS != aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular))
+        printf("ambeinbt color not found\n");
     // return a mesh object created from the extracted mesh data
     std::string name(mesh->mName.C_Str());
 
-    while (meshes_loaded.find(name)!=meshes_loaded.end())
-    {
+    while (meshes_loaded.find(name) != meshes_loaded.end()) {
         name += "_copy";
     }
     meshes_loaded[name] = Mesh(vertices, indices, textures, name);
     meshes_loaded[name].material.diffuseColor = vec3(diffuse.r, diffuse.g, diffuse.b);
+    meshes_loaded[name].material.specularColor = vec3(specular.r, specular.g, specular.b);
     return &meshes_loaded[name];
 }
 
@@ -219,10 +186,10 @@ node *loadModel(std::string const &path, const std::string &shaderName, const st
             temp_mesh.material = m->material;
             temp_mesh.shader = shaderName;
             auto name = m->name + "_copy";
-            while (meshes_loaded.find(name)!=meshes_loaded.end()) 
+            while (meshes_loaded.find(name) != meshes_loaded.end())
                 name += "_copy";
-            
-            temp_mesh.name =name;
+
+            temp_mesh.name = name;
             meshes_loaded[temp_mesh.name] = std::move(temp_mesh);
             temp.meshes.push_back(&meshes_loaded[name]);
         }
