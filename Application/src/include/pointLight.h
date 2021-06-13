@@ -9,8 +9,8 @@ struct pointLight {
 
     inline void refreshModelMatrix() {
         for (auto &mesh : model->meshes) {
-            auto iden = glm::mat4(1);
-            mesh->delpos(position, &iden);
+            // auto iden = glm::mat4(1);
+            mesh->setpos(position);
         }
     }
 
@@ -43,13 +43,19 @@ struct pointLight {
         refreshModelMatrix();
     }
 
-    void setColor(const vec3 &color) {
+    void setdiffColor(const vec3 &color) {
         diffuseColor = color;
         if (model) {
             for (auto &mesh : model->meshes) {
                 mesh->material.diffuseColor = color;
+                mesh->material.specularColor = color;
             }
         }
+    }
+
+    void setColor(const vec3 &color) {
+        ambientColor = color;
+        setdiffColor(color);
     }
 
     [[nodiscard]] inline vec3 &getpos() { return position; }

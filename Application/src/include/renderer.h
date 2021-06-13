@@ -206,9 +206,9 @@ class renderer {
 
                         for (auto &light : currentScene->pointLights) {
                             lightString += std::to_string(i);
-                            lightString.append("].position");
+                            lightString.append("].");
                             auto place = lightString.find_first_of(".") + 1;
-
+                            lightString.append("position");
                             shader->SetUniform<vec3>(lightString.c_str(), light.getpos());
                             lightString.erase(place);
                             lightString.append("intensity");
@@ -234,6 +234,7 @@ class renderer {
                             lightString.erase(place);
                             lightString.append("depthMap");
                             shader->SetUniform<int>(lightString.c_str(), sampler_counter++);
+                            lightString.erase(place - 3);
                             i++;
                         }
 

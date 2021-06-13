@@ -113,7 +113,7 @@ void main() {
 
         // result += CalcDirLight(dirLight, norm, viewDir, diffColor);
     } else
-        result += diffColor;
+        result += material.diffuseColor;
 
     // result = vec3(texture(material.normalMap, f_texCoord));
     // result += CalcPointLight(pointLights[0], norm, tangentFragPos, viewDir, diffColor, tangentLightPos, tangentFragPos);

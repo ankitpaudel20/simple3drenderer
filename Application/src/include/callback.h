@@ -15,7 +15,7 @@ int winHEIGHT, winWIDTH;
 
 #define NR_POINT_LIGHTS 1
 
-unsigned selected_light = 0;
+int selected_light = 0;
 float light_speed = 0.05;
 
 void APIENTRY

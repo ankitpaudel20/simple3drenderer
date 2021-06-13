@@ -16,6 +16,15 @@ struct node {
             child.second.delpos(delta);
     }
 
+    void setpos(const vec3 &position) {
+        auto unit = glm::mat4();
+        for (auto &mesh : meshes)
+            mesh->setpos(position);
+
+        for (auto &child : children)
+            child.second.setpos(position);
+    }
+
     void setScale(const vec3 &scale) {
 
         for (auto &mesh : meshes)

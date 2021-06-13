@@ -43,9 +43,13 @@ struct drawable {
         }
     }
 
-    void delpos(const vec3 &delta, const glm::mat4 *mat = nullptr) {
-        translation = mat ? glm::translate(*mat, (glm::vec3)delta) : glm::translate(this->translation, (glm::vec3)delta);
+    void delpos(const vec3 &delta) {
+        translation = glm::translate(this->translation, (glm::vec3)delta);
+        refreshModel();
+    }
 
+    void setpos(const vec3 &delta) {
+        translation = glm::translate(glm::mat4(1), (glm::vec3)(delta));
         refreshModel();
     }
 
