@@ -213,11 +213,11 @@ void processHoldEvent(GLFWwindow *window) {
     }
 
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        s.pointLights[selected_light].delpos(light_speed * left);
+        s.pointLights[selected_light].delpos(left* light_speed  );
     }
 
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        s.pointLights[selected_light].delpos(light_speed * -left);
+        s.pointLights[selected_light].delpos(-left*light_speed );
     }
 
     if (glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS) {

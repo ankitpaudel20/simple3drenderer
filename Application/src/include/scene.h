@@ -22,8 +22,9 @@ struct scene {
     std::unordered_map<std::string, node *> nodes;
     // std::vector<node> nodes;
     vec3 ambientLight{1.0};
+    float ambientStrength = 0.5f;
     std::vector<pointLight> pointLights;
-    std::vector<dirLight> dirLights;
+    dirLight dir_light;
 
     drawable<Vertex> lightCube;
 
@@ -41,6 +42,14 @@ struct scene {
             return nodes[name];
         }
         nodes[name] = Model::loadModel(modelPath, shaderName, name, flipUV);
+        return nodes[name];
+    }
+
+    node *loadModel2(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
+        if (nodes.find(name) != nodes.end()) {
+            return nodes[name];
+        }
+        nodes[name] = obj::loadModel(modelPath, shaderName, name, flipUV);
         return nodes[name];
     }
 

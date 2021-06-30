@@ -7,6 +7,7 @@ add_executable(Application
         Application/src/vendor/include/glm/detail/glm.cpp
         Application/src/vendor/glad/glad.c
         Application/src/vendor/include/stb_image/stb_image.cpp
+        Application/src/vendor/include/tinyobj/tiny_obj_loader.cc
         Application/src/vendor/include/imgui/imgui.cpp
         Application/src/vendor/include/imgui/imgui_draw.cpp
         Application/src/vendor/include/imgui/imgui_impl_glfw.cpp
@@ -19,14 +20,16 @@ target_include_directories(Application PRIVATE Application/src/include)
 target_include_directories(Application PRIVATE Application/src/vendor/include)
 
 
-target_link_directories(Application PRIVATE Application/libs/glfw/)
-target_link_directories(Application PRIVATE Application/libs/assimp/Debug/)
-target_link_directories(Application PRIVATE Application/libs/zlib/debug/)
-target_link_directories(Application PRIVATE Application/libs/assimp/Release/)
-target_link_directories(Application PRIVATE Application/libs/zlib/release/)
 
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+
+	target_link_directories(Application PRIVATE Application/libs/glfw/)
+	target_link_directories(Application PRIVATE Application/libs/assimp/Debug/)
+	target_link_directories(Application PRIVATE Application/libs/zlib/debug/)
+	target_link_directories(Application PRIVATE Application/libs/assimp/Release/)
+	target_link_directories(Application PRIVATE Application/libs/zlib/release/)
+
     target_link_libraries(Application PRIVATE glfw3.lib)
     target_link_libraries( Application PRIVATE debug glfw3.lib assimp-vc142-mtd.lib assimpd.lib zlibstaticd.lib)
     #target_link_libraries( Application PRIVATE optimized glfw3.lib assimp-vc142-mt.lib assimp.lib zlibstatic.lib)

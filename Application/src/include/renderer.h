@@ -26,8 +26,10 @@ static std::unordered_map<std::string, Shader> shadersLoaded;
 
 class renderer {
     std::list<entity> entities;
-    std::vector<uint32_t> depthfbo, depthCubemap;
-    const unsigned int SHADOW_WIDTH = 1920, SHADOW_HEIGHT = 1920;
+    std::vector<uint32_t> depthfbo_pointlight, depthCubemap_pointlight;
+    uint32_t depthfbo_dirlight, depthtexture_dirlight;
+    const unsigned int POINT_SHADOW_WIDTH = 1920, POINT_SHADOW_HEIGHT = 1920;
+    const unsigned int DIR_SHADOW_WIDTH = 1920, DIR_SHADOW_HEIGHT = 1920;
     float shadow_near_plane = 0.1f;
     float shadow_farplane = 125.0f;
 
@@ -86,25 +88,42 @@ class renderer {
             processNode(n.second);
         }
         for (size_t i = 0; i < currentScene->pointLights.size(); i++) {
-            depthfbo.push_back(0);
-            glGenFramebuffers(1, &depthfbo.back());
-            depthCubemap.push_back(0);
-            glGenTextures(1, &depthCubemap.back());
-            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap.back());
+            depthfbo_pointlight.push_back(0);
+            glGenFramebuffers(1, &depthfbo_pointlight.back());
+            depthCubemap_pointlight.push_back(0);
+            glGenTextures(1, &depthCubemap_pointlight.back());
+            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap_pointlight.back());
             for (unsigned int i = 0; i < 6; ++i)
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, POINT_SHADOW_WIDTH, POINT_SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glBindFramebuffer(GL_FRAMEBUFFER, depthfbo.back());
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap.back(), 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, depthfbo_pointlight.back());
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap_pointlight.back(), 0);
             glDrawBuffer(GL_NONE);
             glReadBuffer(GL_NONE);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             /* code */
         }
+
+       /* glGenFramebuffers(1, &depthfbo_dirlight);
+        glGenTextures(1, &depthtexture_dirlight);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthtexture_dirlight);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, DIR_SHADOW_WIDTH, DIR_SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        float borderColor[] = {1.0, 1.0, 1.0, 1.0};
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthfbo_dirlight);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthtexture_dirlight, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
+
         shadersLoaded["point_light_shadow"] = Shader(resPath + "/shaders/point_shadows_depth", true);
     }
 
@@ -114,9 +133,9 @@ class renderer {
 
     void renderDepthmap() {
 
-        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, shadow_near_plane, shadow_farplane);
+        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)POINT_SHADOW_WIDTH / (float)POINT_SHADOW_HEIGHT, shadow_near_plane, shadow_farplane);
         // shadowTransforms.reserve(4);
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glViewport(0, 0, POINT_SHADOW_WIDTH, POINT_SHADOW_HEIGHT);
         auto &lights = currentScene->pointLights;
         auto &shader = shadersLoaded["point_light_shadow"];
         shader.Bind();
@@ -129,7 +148,7 @@ class renderer {
             shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(0.0f, -1.0f, 0.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
             shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(0.0f, 0.0f, 1.0f)), glm::vec3(0.0f, -1.0f, 0.0f)));
             shadowTransforms.push_back(shadowProj * glm::lookAt((glm::vec3)lights[i].getpos(), (glm::vec3)(lights[i].getpos() + vec3(0.0f, 0.0f, -1.0f)), glm::vec3(0.0f, -1.0f, 0.0f)));
-            glBindFramebuffer(GL_FRAMEBUFFER, depthfbo[i]);
+            glBindFramebuffer(GL_FRAMEBUFFER, depthfbo_pointlight[i]);
             glClear(GL_DEPTH_BUFFER_BIT);
 
             for (unsigned int i = 0; i < 6; ++i)
@@ -176,6 +195,7 @@ class renderer {
 
                     shader->SetUniform<vec3>("camPos", currentScene->cam.Camera_Position);
                     shader->SetUniform<vec3>("ambientLight", currentScene->ambientLight);
+                    shader->SetUniform<float>("ambientStrength", currentScene->ambientStrength);
                     uint32_t sampler_counter = 1;
 
                     shader->SetUniform<float>("material.shininess", entity.mesh->material.shininess);
@@ -192,6 +212,10 @@ class renderer {
                     shader->SetUniform<int>("material.specularMap", sampler_counter++);
                     entity.normal->Bind(sampler_counter);
                     shader->SetUniform<int>("material.normalMap", sampler_counter++);
+
+                    shader->SetUniform<vec3>("dirLight.direction", currentScene->dir_light.direction);
+                    shader->SetUniform<vec3>("dirLight.color", currentScene->dir_light.color);
+                    shader->SetUniform<float>("dirLight.intensity", currentScene->dir_light.intensity);
 
                     shader->SetUniform<int>("doLightCalculations", entity.mesh->doLightCalculations);
                     if (entity.mesh->doLightCalculations) {
@@ -228,9 +252,15 @@ class renderer {
                             lightString.erase(place);
                             lightString.append("quadratic");
                             shader->SetUniform<float>(lightString.c_str(), light.quadratic);
+                            lightString.erase(place);
+                            lightString.append("radius");
+                            shader->SetUniform<float>(lightString.c_str(), light.radius);
+                            lightString.erase(place);
+                            lightString.append("dropoffRadius");
+                            shader->SetUniform<float>(lightString.c_str(), light.dropoffRadius);
 
                             glActiveTexture(GL_TEXTURE0 + sampler_counter);
-                            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap[i]);
+                            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap_pointlight[i]);
                             lightString.erase(place);
                             lightString.append("depthMap");
                             shader->SetUniform<int>(lightString.c_str(), sampler_counter++);
@@ -263,10 +293,10 @@ class renderer {
         for (auto &i : texturesLoaded) {
             i.second.free();
         }
-        for (auto &i : depthfbo) {
+        for (auto &i : depthfbo_pointlight) {
             glDeleteFramebuffers(1, &i);
         }
-        for (auto &i : depthCubemap) {
+        for (auto &i : depthCubemap_pointlight) {
             glDeleteTextures(1, &i);
         }
 

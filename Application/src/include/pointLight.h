@@ -4,7 +4,7 @@ struct pointLight {
   private:
     vec3 position;
     vec3 diffuseColor;
-    vec3 ambientColor = 1;
+    vec3 ambientColor = vec3(1);
     node *model = nullptr;
 
     inline void refreshModelMatrix() {
@@ -16,13 +16,17 @@ struct pointLight {
 
   public:
     float intensity;
+    float radius = 11;
+    float dropoffRadius = 1;
 
-    float constant = 1;
-    float linear = 0.09;
-    float quadratic = 0.032;
+    // float constant = 1;
+    // float linear = 0.09;
+    // float quadratic = 0.032;
+    float constant = 0.85;
+    float linear = 1.0;
+    float quadratic = 0.06;
 
-    pointLight(const vec3 &pos, const float &intensity, const vec3 &diffcol = 1) : position(pos), diffuseColor(diffcol), intensity(intensity) {
-    }
+    pointLight(const vec3 &pos, const float &intensity, const vec3 &diffcol = vec3(1)) : position(pos), diffuseColor(diffcol), intensity(intensity) {}
 
     void delpos(const vec3 &delta) {
         position += delta;
@@ -40,6 +44,10 @@ struct pointLight {
 
     void setmodel(node *model) {
         this->model = model;
+        for (auto mesh : model->meshes) {
+            mesh->material.diffuseColor = diffuseColor;
+        }
+
         refreshModelMatrix();
     }
 

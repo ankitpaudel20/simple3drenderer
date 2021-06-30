@@ -5,4 +5,5 @@ cmake-build-debug/
 .vscode/
 .vs/
 Application/libs/assimp/
+Application/res/3dModels/
 CMakeSettings.json

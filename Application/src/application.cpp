@@ -105,16 +105,15 @@ int main(int argc, char *argv[]) {
 
         scene mainScene;
         glfwSetWindowUserPointer(mainWin, &mainScene);
-        mainScene.pointLights.emplace_back(vec3(0, 1, 0), 5);
-        mainScene.pointLights[0].setColor(vec3(0, 1, 0));
-        mainScene.pointLights.emplace_back(vec3(1, 0, 0), 5);
-        mainScene.pointLights[1].setColor(vec3(1, 0, 0));
-        mainScene.pointLights.emplace_back(vec3(0, 0, 1), 5);
-        mainScene.pointLights[1].setColor(vec3(0, 0, 1));
+        mainScene.pointLights.emplace_back(vec3(1), 5);
+        // mainScene.pointLights.emplace_back(vec3(1, 0, 0), 1);
+        // mainScene.pointLights[1].setColor(vec3(1, 0, 0));
+        // mainScene.pointLights.emplace_back(vec3(0, 0, 1), 1);
+        // mainScene.pointLights[1].setColor(vec3(0, 0, 1));
         std::vector<node *> lightmodels;
-        lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light"));
-        lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light2"));
-        lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light3"));
+        lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/sphere.obj", "cube_final2", "light"));
+        // lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/sphere.obj", "cube_final2", "light2"));
+        // lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/sphere.obj", "cube_final2", "light3"));
         for (auto &mesh : lightmodels) {
             mesh->setScale(vec3(0.1));
             for (auto &m : mesh->meshes) {
@@ -122,8 +121,15 @@ int main(int argc, char *argv[]) {
             }
         }
         mainScene.pointLights[0].setmodel(lightmodels[0]);
-        mainScene.pointLights[1].setmodel(lightmodels[1]);
-        mainScene.pointLights[2].setmodel(lightmodels[2]);
+        // mainScene.pointLights[1].setmodel(lightmodels[1]);
+        // mainScene.pointLights[2].setmodel(lightmodels[2]);
+
+        mainScene.dir_light.direction = vec3(0.5, -1, 0.5);
+
+        mainScene.pointLights[0].setpos(vec3(0, 10, 0));
+        mainScene.cam.Camera_Position = glm::vec3(10, 10, 10);
+        mainScene.cam.DelYaw(45);
+        mainScene.cam.DelPitch(-30);
 
         mainScene.skybox = resPath + "/skybox";
 
@@ -143,12 +149,18 @@ int main(int argc, char *argv[]) {
         // auto colorCube2 = mainScene.loadModel(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color2");
         colorCube->delpos(vec3(-5, 3, 3));
         // colorCube2->delpos(vec3(5, 3, 3));
-        // auto trans = mainScene.loadModel(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
+        auto trans = mainScene.loadModel(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
+        // auto gallery = mainScene.loadModel(resPath + "/3dModels/gallery/gallery.obj", "cube_final2", "gallery");
+        // auto pine = mainScene.loadModel(resPath + "/3dModels/pine/scrubPine.obj", "cube_final2", "pineTree");
+        // pine->setScale(vec3(0.01));
+        // auto rungholt = mainScene.loadModel(resPath + "/3dModels/rungholt/rungholt.obj", "cube_final2", "rungholt");
+        // auto house = mainScene.loadModel(resPath + "/3dModels/rungholt/house.obj", "cube_final2", "house");
+        // auto bugatti = mainScene.loadModel(resPath + "/3dModels/bugatti/bugatti.obj", "cube_final2", "bugatti");
         // auto l = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light");
         // l->delpos(3);
         // auto tree = mainScene.loadModel(resPath + "/3dModels/tree/Tree1.obj", "cube_final2", "tree");
-        auto sponza = mainScene.loadModel(resPath + "/3dModels/sponza/sponza.obj", "cube_final2", "sponza");
-        sponza->setScale(0.03);
+        // auto sponza = mainScene.loadModel(resPath + "/3dModels/sponza/sponza.obj", "cube_final2", "sponza");
+        // sponza->setScale(0.03);
         // auto plane = mainScene.loadModel(resPath + "/3dModels/plane.obj", "cube_final2", "plane");
 
         renderer mainRend;
@@ -185,9 +197,11 @@ int main(int argc, char *argv[]) {
         float shininess = 32, amb = 0.1, diff = 1.0;
         float newshininess = shininess, newamb = amb, newdiff = diff;
 
-        std::vector<const char *> pointlightString(mainScene.pointLights.size());
+        std::vector<std::string> pointlightString(mainScene.pointLights.size());
+        std::vector<const char *> pointlightChar(mainScene.pointLights.size());
         for (int i = 0; i < pointlightString.size(); i++) {
             pointlightString[i] = ("pointlight " + std::to_string(i)).c_str();
+            pointlightChar[i] = pointlightString[i].c_str();
         }
 
         while (!(glfwWindowShouldClose(imguiWin) || glfwWindowShouldClose(mainWin))) {
@@ -233,7 +247,7 @@ int main(int argc, char *argv[]) {
                     ImGui::Checkbox("render deth: ", &mainRend.enable_shadows);
                     ImGui::Checkbox("enable normals", &mainRend.enable_normals);
 
-                    ImGui::Combo("pointlights", &selected_light, &pointlightString[0], pointlightString.size());
+                    ImGui::Combo("pointlights", &selected_light, &pointlightChar[0], pointlightChar.size());
 
                     // ImGui::DragFloat3("translate second colorcube", &translate.x, 0.1, -10.f, 10.f);
                     // colorCube2->setpos(translate);
@@ -243,15 +257,23 @@ int main(int argc, char *argv[]) {
                     // ImGui::SliderFloat3("color", &lightColor.x, 0.0f, 1.0f);
                     // ImGui::SliderFloat("near point", &near_point, 0.0f, 5.0f);
                     ImGui::SliderFloat3("ambientLight color", &mainScene.ambientLight.x, 0.0f, 1.0f);
+                    ImGui::SliderFloat("directional intensity", &mainScene.dir_light.intensity, 0.f, 50.f);
+
+                    if (ImGui::SliderFloat3("Light Direction", &mainScene.dir_light.direction.x, -1, +1)) {
+                        mainScene.dir_light.direction = vec3::normalize(mainScene.dir_light.direction);
+                    }
+
                     vec3 color = mainScene.pointLights[selected_light].get_diffuse_color();
                     ImGui::ColorEdit3("lightColor", &color.x);
                     if (color != mainScene.pointLights[selected_light].get_diffuse_color()) {
                         mainScene.pointLights[selected_light].setColor(color);
                     }
-                    ImGui::SliderFloat("pointLight intensity", &mainScene.pointLights[selected_light].intensity, 0.f, 50.f);
 
+                    ImGui::SliderFloat("pointLight intensity", &mainScene.pointLights[selected_light].intensity, 0.f, 50.f);
+                    ImGui::SliderFloat("pointLight radius", &mainScene.pointLights[selected_light].radius, 0.f, 100.f);
+                    ImGui::SliderFloat("pointLight dropoff", &mainScene.pointLights[selected_light].dropoffRadius, 0.f, 2.f);
                     ImGui::SliderFloat("linear term", &mainScene.pointLights[selected_light].linear, 0.001f, 0.7f);
-                    ImGui::SliderFloat("quadratic term", &mainScene.pointLights[selected_light].quadratic, 0.000007f, 1.8f);
+                    ImGui::SliderFloat("quadratic term", &mainScene.pointLights[selected_light].quadratic, 0.000007f, 0.5f);
 
                     ImGui::Text("position of light is %.3f %.3f %.3f",
                                 mainScene.pointLights[selected_light].getpos().x,
@@ -286,6 +308,7 @@ int main(int argc, char *argv[]) {
                     ImGui::End();
 
                     ImGui::Begin("Information");
+                    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
                     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
