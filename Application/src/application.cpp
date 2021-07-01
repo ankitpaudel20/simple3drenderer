@@ -1,4 +1,5 @@
 
+// #define USEASSIMP
 #include <random>
 
 #include "Shader.h"
@@ -93,7 +94,7 @@ int main(int argc, char *argv[]) {
     auto glrenderer = glGetString(GL_RENDERER);
     auto glvendor = glGetString(GL_VENDOR);
     glEnable(GL_MULTISAMPLE);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     (glEnable(GL_DEPTH_TEST));
@@ -111,9 +112,9 @@ int main(int argc, char *argv[]) {
         // mainScene.pointLights.emplace_back(vec3(0, 0, 1), 1);
         // mainScene.pointLights[1].setColor(vec3(0, 0, 1));
         std::vector<node *> lightmodels;
-        lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/sphere.obj", "cube_final2", "light"));
-        // lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/sphere.obj", "cube_final2", "light2"));
-        // lightmodels.push_back(mainScene.loadModel(resPath + "/3dModels/sphere.obj", "cube_final2", "light3"));
+        lightmodels.push_back(mainScene.loadModel_obj(resPath + "/3dModels/sphere.obj", "cube_final2", "light"));
+        // lightmodels.push_back(mainScene.loadModel_obj(resPath + "/3dModels/sphere.obj", "cube_final2", "light2"));
+        // lightmodels.push_back(mainScene.loadModel_obj(resPath + "/3dModels/sphere.obj", "cube_final2", "light3"));
         for (auto &mesh : lightmodels) {
             mesh->setScale(vec3(0.1));
             for (auto &m : mesh->meshes) {
@@ -133,35 +134,34 @@ int main(int argc, char *argv[]) {
 
         mainScene.skybox = resPath + "/skybox";
 
-        // auto cyborg = mainScene.loadModel(resPath + "/3dModels/cyborg/cyborg.obj", "cube_final2", "cyborg");
+        auto cyborg1 = mainScene.loadModel_obj(resPath + "/3dModels/cyborg/cyborg1.obj", "cube_final2", "cyborg1");
         // auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
-        // auto hammer = mainScene.loadModel(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
+        // auto nanosuit1 = mainScene.loadModel_obj(resPath + "/3dModels/nanosuit/nanosuit1.obj", "cube_final2", "nanosuit1", true);
+        // auto hammer = mainScene.loadModel_obj(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
 
         // hammer->delpos(vec3(0, 5, -3));
         // hammer->setScale(vec3(0.5));
 
-        // nanosuit->delpos(vec3(3, 0, 3));
-        // cyborg->delpos(vec3(-3, 1, 0));
-        // cyborg->setScale(vec3(3));
+        cyborg1->setScale(vec3(3));
         // nanosuit->setScale(vec3(0.9));
+        // cyborg->delpos(vec3(-3, 1, 0));
 
-        auto colorCube = mainScene.loadModel(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color");
-        // auto colorCube2 = mainScene.loadModel(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color2");
-        colorCube->delpos(vec3(-5, 3, 3));
+        auto colorCube = mainScene.loadModel_obj(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color");
+        colorCube->delpos(vec3(3, 0, 3));
         // colorCube2->delpos(vec3(5, 3, 3));
-        auto trans = mainScene.loadModel(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
-        // auto gallery = mainScene.loadModel(resPath + "/3dModels/gallery/gallery.obj", "cube_final2", "gallery");
-        // auto pine = mainScene.loadModel(resPath + "/3dModels/pine/scrubPine.obj", "cube_final2", "pineTree");
+        // auto trans = mainScene.loadModel_obj(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
+        // auto gallery = mainScene.loadModel_obj(resPath + "/3dModels/gallery/gallery.obj", "cube_final2", "gallery");
+        // auto pine = mainScene.loadModel_obj(resPath + "/3dModels/pine/scrubPine.obj", "cube_final2", "pineTree");
         // pine->setScale(vec3(0.01));
-        // auto rungholt = mainScene.loadModel(resPath + "/3dModels/rungholt/rungholt.obj", "cube_final2", "rungholt");
-        // auto house = mainScene.loadModel(resPath + "/3dModels/rungholt/house.obj", "cube_final2", "house");
-        // auto bugatti = mainScene.loadModel(resPath + "/3dModels/bugatti/bugatti.obj", "cube_final2", "bugatti");
-        // auto l = mainScene.loadModel(resPath + "/3dModels/box.obj", "cube_final2", "light");
+        // auto rungholt = mainScene.loadModel_obj(resPath + "/3dModels/rungholt/rungholt.obj", "cube_final2", "rungholt");
+        // auto house = mainScene.loadModel_obj(resPath + "/3dModels/rungholt/house.obj", "cube_final2", "house");
+        //auto bugatti = mainScene.loadModel_obj(resPath + "/3dModels/bugatti/bugatti.obj", "cube_final2", "bugatti");
+        // auto l = mainScene.loadModel_obj(resPath + "/3dModels/box.obj", "cube_final2", "light");
         // l->delpos(3);
-        // auto tree = mainScene.loadModel(resPath + "/3dModels/tree/Tree1.obj", "cube_final2", "tree");
-        // auto sponza = mainScene.loadModel(resPath + "/3dModels/sponza/sponza.obj", "cube_final2", "sponza");
+        // auto tree = mainScene.loadModel_obj(resPath + "/3dModels/tree/Tree1.obj", "cube_final2", "tree");
+        // auto sponza = mainScene.loadModel_obj(resPath + "/3dModels/sponza/sponza.obj", "cube_final2", "sponza");
         // sponza->setScale(0.03);
-        // auto plane = mainScene.loadModel(resPath + "/3dModels/plane.obj", "cube_final2", "plane");
+        // auto plane = mainScene.loadModel_obj(resPath + "/3dModels/plane.obj", "cube_final2", "plane");
 
         renderer mainRend;
         mainRend.currentScene = &mainScene;

@@ -1,11 +1,9 @@
 
 #pragma once
 
-#ifdef USEASSIMP
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#endif
 
 #include "tinyobj/tiny_obj_loader.h"
 
@@ -29,8 +27,6 @@ static std::unordered_map<std::string, node *> models_loaded_path;
 static std::unordered_map<std::string, Mesh> meshes_loaded;
 
 namespace Model {
-
-#ifdef USEASSIMP
 
 // checks all material textures of a given type and loads the textures if they're not loaded yet.
 // the required info is returned as a Texture struct.
@@ -240,80 +236,12 @@ node *loadModel(std::string const &path, const std::string &shaderName, const st
     models_loaded_path[path] = &models_loaded[name];
     return &models_loaded[name];
 }
-#endif
 
-void calculate_tangent(Vertex *triangle) {
+} // namespace Model
 
-    const vec3 &pos1 = triangle->position;
-    const vec3 &pos2 = (triangle + 1)->position;
-    const vec3 &pos3 = (triangle + 2)->position;
-    const vec2 &uv1 = triangle->texCoord;
-    const vec2 &uv2 = (triangle + 1)->texCoord;
-    const vec2 &uv3 = (triangle + 2)->texCoord;
-    const vec3 &nm = triangle->normal;
+namespace obj {
 
-    vec3 edge1 = pos2 - pos1;
-    vec3 edge2 = pos3 - pos1;
-    vec2 deltaUV1 = uv2 - uv1;
-    vec2 deltaUV2 = uv3 - uv1;
-
-    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-    triangle->tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-    (triangle)->tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-    (triangle)->tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-    (triangle + 1)->tangent = (triangle)->tangent;
-    (triangle + 2)->tangent = (triangle)->tangent;
-
-    triangle->bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-    (triangle)->bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-    (triangle)->bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-    (triangle + 1)->bitangent = (triangle)->bitangent;
-    (triangle + 2)->bitangent = (triangle)->bitangent;
-}
-
-void calculate_tangent2(Vertex *triangle) {
-
-    const vec3 &pos1 = triangle->position;
-    const vec3 &pos2 = (triangle + 1)->position;
-    const vec3 &pos3 = (triangle + 2)->position;
-    const vec2 &uv1 = triangle->texCoord;
-    const vec2 &uv2 = (triangle + 1)->texCoord;
-    const vec2 &uv3 = (triangle + 2)->texCoord;
-    const vec3 &nm = triangle->normal;
-
-    // position differences p1->p2 and p1->p3
-    vec3 edge1 = pos2 - pos1, edge2 = pos3 - pos1;
-
-    // texture offset p1->p2 and p1->p3
-    vec2 deltaUV1 = uv2 - uv1;
-    vec2 deltaUV2 = uv3 - uv1;
-
-    float dirCorrection = (deltaUV2.x * deltaUV1.y - deltaUV2.y * deltaUV1.x) < 0.0f ? -1.0f : 1.0f;
-    // when t1, t2, t3 in same position in UV space, just use default UV direction.
-    if (deltaUV1.x * deltaUV2.y == deltaUV1.y * deltaUV2.x) {
-        deltaUV1.x = 0.0;
-        deltaUV1.y = 1.0;
-        deltaUV2.x = 1.0;
-        deltaUV2.y = 0.0;
-    }
-
-    // tangent points in the direction where to positive X axis of the texture coord's would point in model space
-    // bitangent's points along the positive Y axis of the texture coord's, respectively
-    triangle->tangent.x = (edge2.x * deltaUV1.y - edge1.x * deltaUV2.y) * dirCorrection;
-    triangle->tangent.y = (edge2.y * deltaUV1.y - edge1.y * deltaUV2.y) * dirCorrection;
-    triangle->tangent.z = (edge2.z * deltaUV1.y - edge1.z * deltaUV2.y) * dirCorrection;
-    triangle->tangent.normalize();
-    (triangle + 1)->tangent = (triangle)->tangent;
-    (triangle + 2)->tangent = (triangle)->tangent;
-    triangle->bitangent.x = (edge2.x * deltaUV1.x - edge1.x * deltaUV2.x) * dirCorrection;
-    triangle->bitangent.y = (edge2.y * deltaUV1.x - edge1.y * deltaUV2.x) * dirCorrection;
-    triangle->bitangent.z = (edge2.z * deltaUV1.x - edge1.z * deltaUV2.x) * dirCorrection;
-    triangle->bitangent.normalize();
-    (triangle + 1)->bitangent = (triangle)->bitangent;
-    (triangle + 2)->bitangent = (triangle)->bitangent;
-}
-
-node *loadModel_obj(std::string const &path, const std::string &shaderName, const std::string &name, bool flipUV = false) {
+node *loadModel(std::string const &path, const std::string &shaderName, const std::string &name, bool flipUV = false) {
 
     if (models_loaded_path.find(path) != models_loaded_path.end()) {
         if (models_loaded_path[path] == &models_loaded[name]) {
@@ -352,7 +280,6 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = directory; // Path to material files
     reader_config.triangulate = true;          // Path to material files
-    directory += "/";
 
     tinyobj::ObjReader reader;
 
@@ -375,21 +302,15 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
     auto &shapes = reader.GetShapes();
     auto &materials = reader.GetMaterials();
 
-    std::unordered_map<int, std::string> material_to_mesh_map;
-
     // Loop over shapes
     for (size_t s = 0; s < shapes.size(); s++) {
 
         auto name = shapes[s].name;
-        Mesh *m1 = new Mesh();
-        bool loaded = false;
+        // Mesh *m1 = new Mesh();
 
-        //std::string material_name;
-        //Material current_material;
-
-        /* std::vector<Vertex> vertices;
+        std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
-        std::vector<std::string> textures;*/
+        std::vector<std::string> textures;
 
         size_t index_offset = 0;
         uint32_t current_index = 0;
@@ -408,51 +329,14 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
                 // Invaid material ID. Use default material.
                 current_material_id = materials.size() - 1; // Default material is added to the last item in `materials`.
             }
-
-            m1->material.id = m1->material.id == -1 ? current_material_id : m1->material.id;
-            if (current_material_id != m1->material.id) {
-                name += materials[m1->material.id].name;
-                if (name == std::string("CubeMaterial.005")) {
-                    DEBUG_BREAK;
-                }
-                m1->name = name;
-                meshes_loaded[name] = std::move(*m1);
-                temp.meshes.push_back(&meshes_loaded[name]);
-                current_index = 0;
-                Mesh *t = m1;
-                //delete m1;
-                if (material_to_mesh_map.find(current_material_id) == material_to_mesh_map.end()) {
-                    m1 = new Mesh();
-                    m1->material.id = current_material_id;
-                    name = shapes[s].name;
-                } else {
-                    m1 = &meshes_loaded[material_to_mesh_map[current_material_id]];
-                    loaded = true;
-                    name = shapes[s].name;
-                }
-
-                material_to_mesh_map[t->material.id] = name;
+            if (textures.size() < 4) {
+                textures.emplace_back(materials[current_material_id].ambient_texname);
+                textures.emplace_back(materials[current_material_id].diffuse_texname);
+                textures.emplace_back(materials[current_material_id].specular_texname);
+                textures.emplace_back(materials[current_material_id].bump_texname);
             }
-
-            if (m1->material.ambientMap.empty() && !materials[current_material_id].diffuse_texname.empty()) {
-                if (materials[current_material_id].name == std::string("CubeMaterial.005")) {
-                    DEBUG_BREAK;
-                }
-                m1->material.diffuseMap = directory + materials[current_material_id].diffuse_texname;
-                if (!materials[current_material_id].ambient_texname.empty()) {
-                    m1->material.ambientMap = directory + materials[current_material_id].ambient_texname;
-                }
-                if (!materials[current_material_id].specular_texname.empty()) {
-                    m1->material.specularMap = directory + materials[current_material_id].specular_texname;
-                }
-                if (!materials[current_material_id].bump_texname.empty()) {
-                    m1->material.normalMap = directory + materials[current_material_id].bump_texname;
-                }
-            }
-
-            if (m1->material.diffuseColor == vec3(1)) {
-                m1->material.diffuseColor = vec3(materials[current_material_id].diffuse[0], materials[current_material_id].diffuse[1], materials[current_material_id].diffuse[2]);
-                m1->material.specularColor = vec3(materials[current_material_id].specular[0], materials[current_material_id].specular[1], materials[current_material_id].specular[2]);
+            if (current_material_id) {
+                /* code */
             }
 
             size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
@@ -471,41 +355,33 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
 
                 // Check if `normal_index` is zero or positive. negative = no normal data
                 if (idx.normal_index >= 0) {
-                    vertex.normal = vec3(attrib.normals[3 * size_t(idx.normal_index) + 0], attrib.normals[3 * size_t(idx.normal_index) + 1], attrib.normals[3 * size_t(idx.normal_index) + 2]);
+                    vertex.normal = vec3(attrib.normals[3 * size_t(idx.vertex_index) + 0], attrib.vertices[3 * size_t(idx.vertex_index) + 1], attrib.vertices[3 * size_t(idx.vertex_index) + 2]);
+                    // tinyobj::real_t nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
+                    // tinyobj::real_t ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
+                    // tinyobj::real_t nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
                 }
 
                 // Check if `texcoord_index` is zero or positive. negative = no texcoord data
                 if (idx.texcoord_index >= 0) {
                     vertex.texCoord = vec2(attrib.texcoords[2 * size_t(idx.texcoord_index) + 0], attrib.texcoords[2 * size_t(idx.texcoord_index) + 1]);
+                    // tinyobj::real_t tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+                    // tinyobj::real_t ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
                 }
-                m1->m_vertices.push_back(vertex);
-                m1->m_indices.push_back(current_index++);
-            }
 
-            if (!m1->material.normalMap.empty()) {
-                calculate_tangent2((&m1->m_vertices.back()) - 2);
+                vertices.push_back(vertex);
+                indices.push_back(current_index++);
             }
             index_offset += fv;
         }
 
-        if (!loaded) {
-            auto current_material_id = m1->material.id;
-            if ((current_material_id < 0) || (current_material_id >= static_cast<int>(materials.size()))) {
-                // Invaid material ID. Use default material.
-                current_material_id = materials.size() - 1; // Default material is added to the last item in `materials`.
-            }
-            name = name + materials[current_material_id].name;
-
-            while (meshes_loaded.find(name) != meshes_loaded.end()) {
-                name += "_copy";
-            }
-            if (materials[current_material_id].name == std::string("CubeMaterial.005")) {
-                DEBUG_BREAK;
-            }
-            m1->name = name;
-            meshes_loaded[name] = std::move(*m1);
-            temp.meshes.push_back(&meshes_loaded[name]);
+        while (meshes_loaded.find(name) != meshes_loaded.end()) {
+            name += "_copy";
         }
+
+        meshes_loaded[name] = Mesh(vertices, indices, textures, name);
+        // meshes_loaded[name].material.diffuseColor = vec3(diffuse.r, diffuse.g, diffuse.b);
+        // meshes_loaded[name].material.specularColor = vec3(specular.r, specular.g, specular.b);
+        temp.meshes.push_back(&meshes_loaded[name]);
     }
 
     for (auto &i : temp.meshes) {
@@ -516,5 +392,4 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
     models_loaded_path[path] = &models_loaded[name];
     return &models_loaded[name];
 }
-
-} // namespace Model
+} // namespace obj

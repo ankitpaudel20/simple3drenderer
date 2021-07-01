@@ -14,62 +14,46 @@ add_executable(Application
         Application/src/vendor/include/imgui/imgui_impl_opengl3.cpp
         Application/src/vendor/include/imgui/imgui_widgets.cpp
         Application/src/application.cpp
-        Application/src/include/scene.h Application/src/include/material.h)
+        Application/src/include/scene.h 
+        Application/src/include/material.h)
 
 target_include_directories(Application PRIVATE Application/src/include)
 target_include_directories(Application PRIVATE Application/src/vendor/include)
 
 
 
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 
 	target_link_directories(Application PRIVATE Application/libs/glfw/)
-	target_link_directories(Application PRIVATE Application/libs/assimp/Debug/)
-	target_link_directories(Application PRIVATE Application/libs/zlib/debug/)
-	target_link_directories(Application PRIVATE Application/libs/assimp/Release/)
-	target_link_directories(Application PRIVATE Application/libs/zlib/release/)
+
 
     target_link_libraries(Application PRIVATE glfw3.lib)
-    target_link_libraries( Application PRIVATE debug glfw3.lib assimp-vc142-mtd.lib assimpd.lib zlibstaticd.lib)
-    #target_link_libraries( Application PRIVATE optimized glfw3.lib assimp-vc142-mt.lib assimp.lib zlibstatic.lib)
     message("Linked to windows using MSVC")
 
-    add_custom_command(TARGET Application POST_BUILD        # Adds a post-build event to MyTest
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
-        "${PROJECT_SOURCE_DIR}/Application/libs/assimp/Debug/assimpd.exe"      # <--this is in-file
-        ${PROJECT_BINARY_DIR})                 # <--this is out-file path
-
-          add_custom_command(TARGET Application POST_BUILD        # Adds a post-build event to MyTest
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
-        "${PROJECT_SOURCE_DIR}/Application/libs/assimp/Release/assimp.exe"      # <--this is in-file
-        ${PROJECT_BINARY_DIR})                 # <--this is out-file path
-    
-        message("current binary directory ${PROJECT_SOURCE_DIR}")
 
 else()
-    if (CMAKE_SYSTEM_NAME STREQUAL Linux)
-        # find_package(ASSIMP REQUIRED)
-        # target_include_directories(Application PRIVATE ${ASSIMP_INCLUDE_DIR})
-        # target_link_libraries(Application PRIVATE libglfw3_linux.a pthread dl GL assimp z zip m)       
-        target_link_libraries(Application PRIVATE glfw pthread dl GL assimp z X11)
+    if (CMAKE_SYSTEM_NAME STREQUAL Linux)        
+        target_link_libraries(Application PRIVATE glfw pthread dl GL X11 assimp)
+        find_package(assimp REQUIRED)
+if (assimp_FOUND)
+    link_directories(${ASSIMP_LIBRARY_DIRS})
+    target_include_directories(Application PRIVATE ${ASSIMP_INCLUDE_DIRS})
+    target_link_libraries (Application PRIVATE ${ASSIMP_LIBRARIES})
+    message("Assimp found")
+    add_compile_definitions(USEASSIMP)
 
+endif(assimp_FOUND)
         message("Linked to Linux")
 
-    elseif (CMAKE_SYSTEM_NAME STREQUAL Windows)
-        # find_package(ASSIMP REQUIRED)
-        # target_include_directories(Application PRIVATE ${ASSIMP_INCLUDE_DIR})
-        target_link_libraries(Application PRIVATE libglfw3 libassimp)
+    elseif (CMAKE_SYSTEM_NAME STREQUAL Windows)     
+    if (assimp_FOUND)
+    link_directories(${ASSIMP_LIBRARY_DIRS})
+    target_include_directories(Application PRIVATE ${ASSIMP_INCLUDE_DIRS})
+    target_link_libraries (Application PRIVATE ${ASSIMP_LIBRARIES})
+    add_compile_definitions(USEASSIMP)
+    message("Assimp found")
+endif(assimp_FOUND)
+        target_link_libraries(Application PRIVATE libglfw3 asimp)
         message("Linked to windows")
     endif ()
 endif()
-
-
-
-
-#add_custom_command(
-#        TARGET Application POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E copy
-#        ${CMAKE_SOURCE_DIR}/Application/libs/assimp/libassimp.so.5.0.0
-#        ${CMAKE_CURRENT_BINARY_DIR}/libassimp.so.5.0.0)
-

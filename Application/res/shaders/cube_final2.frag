@@ -119,7 +119,7 @@ void main() {
                 result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor, tangentLightPos, tangentFragPos, int_by_at);
             }
         }
-        result+=CalcDirLight(dirLight,norm,viewDir,diffColor);
+        //result+=CalcDirLight(dirLight,norm,viewDir,diffColor);
         
     } else
         result += material.diffuseColor;

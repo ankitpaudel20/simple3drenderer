@@ -12,9 +12,6 @@
 #include "pointLight.h"
 #include <unordered_map>
 
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -45,11 +42,11 @@ struct scene {
         return nodes[name];
     }
 
-    node *loadModel2(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
+    node *loadModel_obj(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
         if (nodes.find(name) != nodes.end()) {
             return nodes[name];
         }
-        nodes[name] = obj::loadModel(modelPath, shaderName, name, flipUV);
+        nodes[name] = Model::loadModel_obj(modelPath, shaderName, name, flipUV);
         return nodes[name];
     }
 
