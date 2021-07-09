@@ -1,4 +1,5 @@
 #include <unordered_map>
+#include <map>
 #include <list>
 
 #include "Texture.h"
@@ -82,7 +83,8 @@ class renderer {
 
         if (!currentScene->skybox.empty()) {
             skybox = new skyBox(currentScene->skybox);
-            shadersLoaded["skybox"] = Shader(resPath + "/shaders/skybox", true);
+            auto temp = Shader(resPath + "/shaders/skybox", true);
+            shadersLoaded["skybox"] = std::move(temp);
         }
         for (auto &n : currentScene->nodes) {
             processNode(n.second);
@@ -105,10 +107,9 @@ class renderer {
             glDrawBuffer(GL_NONE);
             glReadBuffer(GL_NONE);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            /* code */
         }
 
-       /* glGenFramebuffers(1, &depthfbo_dirlight);
+        /* glGenFramebuffers(1, &depthfbo_dirlight);
         glGenTextures(1, &depthtexture_dirlight);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthtexture_dirlight);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, DIR_SHADOW_WIDTH, DIR_SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
@@ -152,14 +153,14 @@ class renderer {
             glClear(GL_DEPTH_BUFFER_BIT);
 
             for (unsigned int i = 0; i < 6; ++i)
-                shader.SetUniform<glm::mat4 *>(("shadowMatrices[" + std::to_string(i) + "]").c_str(), &shadowTransforms[i]);
+                shader.SetUniform<const glm::mat4 &>(("shadowMatrices[" + std::to_string(i) + "]").c_str(), shadowTransforms[i]);
             shader.SetUniform<float>("far_plane", shadow_farplane);
             shader.SetUniform<vec3>("lightPos", lights[i].getpos());
 
             for (auto &entity : entities) {
                 if (entity.mesh->draw) {
                     entity.vao.Bind();
-                    shader.SetUniform<glm::mat4 *>("model", &entity.mesh->matModel);
+                    shader.SetUniform<const glm::mat4 &>("model", entity.mesh->matModel);
                     glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
                 }
             }
@@ -168,6 +169,8 @@ class renderer {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, winWIDTH, winHEIGHT);
     }
+
+    float left = 0, right = 100, top = 0, bottom = 500;
 
     void Draw() {
         clear();
@@ -178,6 +181,7 @@ class renderer {
         auto view = glm::lookAt(currentScene->cam.Camera_Position, currentScene->cam.Camera_Position + currentScene->cam.Camera_Facing_Direction * currentScene->cam.Camera_Target_distance, currentScene->cam.Camera_Up);
 
         auto projpersp = glm::perspective(glm::radians(currentScene->cam.FOV), aspect_ratio, currentScene->cam.nearPoint, currentScene->cam.farPoint);
+        // auto projpersp = glm::ortho(left, -left, top, -top, currentScene->cam.nearPoint, currentScene->cam.farPoint);
         auto viewProj = projpersp * view;
         Shader *shader;
 
@@ -187,8 +191,8 @@ class renderer {
                 shader = entity.shader;
 
                 shader->Bind();
-                shader->SetUniform<glm::mat4 *>("model", &entity.mesh->matModel);
-                shader->SetUniform<glm::mat4 *>("viewProj", &viewProj);
+                shader->SetUniform<const glm::mat4 &>("model", entity.mesh->matModel);
+                shader->SetUniform<const glm::mat4 &>("viewProj", viewProj);
 
                 if (entity.mesh->shader == "cube_final2") {
                     shader->SetUniform<int>("enable_normals", enable_normals);
@@ -213,15 +217,11 @@ class renderer {
                     entity.normal->Bind(sampler_counter);
                     shader->SetUniform<int>("material.normalMap", sampler_counter++);
 
-                    shader->SetUniform<vec3>("dirLight.direction", currentScene->dir_light.direction);
-                    shader->SetUniform<vec3>("dirLight.color", currentScene->dir_light.color);
-                    shader->SetUniform<float>("dirLight.intensity", currentScene->dir_light.intensity);
-
                     shader->SetUniform<int>("doLightCalculations", entity.mesh->doLightCalculations);
                     if (entity.mesh->doLightCalculations) {
-                        // shader->SetUniform<vec3>("dirLight.direction", currentScene->dirLights[0].direction);
-                        // shader->SetUniform<float>("dirLight.intensity", currentScene->dirLights[0].intensity);
-                        // shader->SetUniform<vec3>("dirLight.color", currentScene->dirLights[0].color);
+                        shader->SetUniform<vec3>("dirLight.direction", currentScene->dirLight.direction);
+                        shader->SetUniform<float>("dirLight.intensity", currentScene->dirLight.intensity);
+                        shader->SetUniform<vec3>("dirLight.color", currentScene->dirLight.color);
 
                         shader->SetUniform<int>("activePointLights", currentScene->pointLights.size());
 
@@ -277,7 +277,7 @@ class renderer {
             }
         }
         if (skybox) {
-            skybox->draw(&shadersLoaded["skybox"], view, projpersp);
+            skybox->draw(&shadersLoaded["skybox"], view, glm::perspective(glm::radians(currentScene->cam.FOV), aspect_ratio, currentScene->cam.nearPoint, currentScene->cam.farPoint));
         }
     }
 

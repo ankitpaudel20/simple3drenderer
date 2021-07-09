@@ -2,9 +2,9 @@
 #pragma once
 
 #ifdef USEASSIMP
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
+#include "assimp/Importer.hpp"
+#include "assimp/postprocess.h"
+#include "assimp/scene.h"
 #endif
 
 #include "tinyobj/tiny_obj_loader.h"
@@ -383,13 +383,6 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
         auto name = shapes[s].name;
         Mesh *m1 = new Mesh();
         bool loaded = false;
-
-        //std::string material_name;
-        //Material current_material;
-
-        /* std::vector<Vertex> vertices;
-        std::vector<unsigned int> indices;
-        std::vector<std::string> textures;*/
 
         size_t index_offset = 0;
         uint32_t current_index = 0;

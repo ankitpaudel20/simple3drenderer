@@ -21,7 +21,7 @@ struct scene {
     vec3 ambientLight{1.0};
     float ambientStrength = 0.5f;
     std::vector<pointLight> pointLights;
-    dirLight dir_light;
+    dirLight dirLight;
 
     drawable<Vertex> lightCube;
 
