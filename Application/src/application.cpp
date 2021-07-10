@@ -195,12 +195,12 @@ int main(int argc, char *argv[]) {
         float shininess = 32, amb = 0.1, diff = 1.0;
         float newshininess = shininess, newamb = amb, newdiff = diff;
 
-        std::vector<std::string> pointlightString(mainScene.pointLights.size());
+        /* std::vector<std::string> pointlightString(mainScene.pointLights.size());
         std::vector<const char *> pointlightChar(mainScene.pointLights.size());
         for (int i = 0; i < pointlightString.size(); i++) {
             pointlightString[i] = ("pointlight " + std::to_string(i)).c_str();
             pointlightChar[i] = pointlightString[i].c_str();
-        }
+        }*/
 
         while (!(glfwWindowShouldClose(imguiWin) || glfwWindowShouldClose(mainWin))) {
             glfwMakeContextCurrent(mainWin);
@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
                     // ImGui::DragFloat("camera near", &mainScene.cam.nearPoint, 0.1);
                     // ImGui::DragFloat("camera far", &mainScene.cam.farPoint, 0.1);
 
-                    ImGui::Combo("pointlights", &selected_light, &pointlightChar[0], pointlightChar.size());
+                    //ImGui::Combo("pointlights", &selected_light, &pointlightChar[0], pointlightChar.size());
 
                     // ImGui::DragFloat3("translate second colorcube", &translate.x, 0.1, -10.f, 10.f);
                     // colorCube2->setpos(translate);
