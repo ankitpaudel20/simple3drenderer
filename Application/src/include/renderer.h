@@ -1,4 +1,5 @@
 #include <unordered_map>
+#include <map>
 #include <list>
 
 #include "Texture.h"
@@ -35,15 +36,17 @@ class renderer {
 
     skyBox *skybox = nullptr;
 
-    void processNode(node *node) {
-        for (auto mesh : node->meshes) {
+    void processNode(node *n) {
+        if (shadersLoaded.find(n->shaderName) == shadersLoaded.end())
+            shadersLoaded[n->shaderName] = Shader(n->shaderName, resPath + "/shaders/" + n->shaderName, true);
+        for (auto mesh : n->meshes) {
             entity temp;
             temp.vbo = buffer<Vertex, GL_ARRAY_BUFFER>(mesh->m_vertices);
             temp.ibo = buffer<uint32_t, GL_ELEMENT_ARRAY_BUFFER>(mesh->m_indices);
             temp.vao = Vertexarray(temp.vbo, temp.ibo);
             temp.mesh = mesh;
-            if (shadersLoaded.find(mesh->shader) == shadersLoaded.end())
-                shadersLoaded[mesh->shader] = Shader(resPath + "/shaders/" + mesh->shader, true);
+            if (shadersLoaded.find(mesh->shaderName) == shadersLoaded.end())
+                shadersLoaded[mesh->shaderName] = Shader(mesh->shaderName, resPath + "/shaders/" + mesh->shaderName, true);
             if (!mesh->material.ambientMap.empty())
                 if (texturesLoaded.find(mesh->material.ambientMap) == texturesLoaded.end())
                     texturesLoaded[mesh->material.ambientMap] = Texture(mesh->material.ambientMap);
@@ -57,7 +60,7 @@ class renderer {
                 if (texturesLoaded.find(mesh->material.normalMap) == texturesLoaded.end())
                     texturesLoaded[mesh->material.normalMap] = Texture(mesh->material.normalMap);
 
-            temp.shader = &shadersLoaded[mesh->shader];
+            temp.shader = &shadersLoaded[mesh->shaderName];
             temp.ambient = &texturesLoaded[mesh->material.ambientMap];
             temp.diffuse = &texturesLoaded[mesh->material.diffuseMap];
             temp.specular = &texturesLoaded[mesh->material.specularMap];
@@ -65,9 +68,8 @@ class renderer {
             entities.push_back(temp);
             mesh->gpuInstance = &entities.back();
         }
-
-        for (auto &i : node->children) {
-            processNode(&i.second);
+        for (auto &i : n->children) {
+            processNode(i.second);
         }
     }
 
@@ -82,7 +84,8 @@ class renderer {
 
         if (!currentScene->skybox.empty()) {
             skybox = new skyBox(currentScene->skybox);
-            shadersLoaded["skybox"] = Shader(resPath + "/shaders/skybox", true);
+            auto temp = Shader("skybox", resPath + "/shaders/skybox", true);
+            shadersLoaded["skybox"] = std::move(temp);
         }
         for (auto &n : currentScene->nodes) {
             processNode(n.second);
@@ -105,10 +108,9 @@ class renderer {
             glDrawBuffer(GL_NONE);
             glReadBuffer(GL_NONE);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            /* code */
         }
 
-       /* glGenFramebuffers(1, &depthfbo_dirlight);
+        /* glGenFramebuffers(1, &depthfbo_dirlight);
         glGenTextures(1, &depthtexture_dirlight);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthtexture_dirlight);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, DIR_SHADOW_WIDTH, DIR_SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
@@ -124,12 +126,25 @@ class renderer {
         glReadBuffer(GL_NONE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
 
-        shadersLoaded["point_light_shadow"] = Shader(resPath + "/shaders/point_shadows_depth", true);
+        shadersLoaded["point_light_shadow"] = Shader("point_light_shadow", resPath + "/shaders/point_shadows_depth", true);
     }
 
     inline void clear() { (glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)); }
 
     inline void swapBuffers(GLFWwindow *win) { glfwSwapBuffers(win); }
+
+    void recurseDrawModel(node *n, Shader *shader = nullptr, glm::mat4 model = glm::mat4(1)) {
+        model = model * n->matModel;
+        for (auto m : n->meshes) {
+            shader->Bind();
+            shader->SetUniform<const glm::mat4 &>("model", model * m->matModel);
+            m->gpuInstance->vao.Bind();
+            glDrawElements(GL_TRIANGLES, m->gpuInstance->ibo.m_count, GL_UNSIGNED_INT, nullptr);
+        }
+        for (auto child : n->children) {
+            recurseDrawModel(child.second, shader, model);
+        }
+    }
 
     void renderDepthmap() {
 
@@ -152,21 +167,114 @@ class renderer {
             glClear(GL_DEPTH_BUFFER_BIT);
 
             for (unsigned int i = 0; i < 6; ++i)
-                shader.SetUniform<glm::mat4 *>(("shadowMatrices[" + std::to_string(i) + "]").c_str(), &shadowTransforms[i]);
+                shader.SetUniform<const glm::mat4 &>(("shadowMatrices[" + std::to_string(i) + "]").c_str(), shadowTransforms[i]);
             shader.SetUniform<float>("far_plane", shadow_farplane);
             shader.SetUniform<vec3>("lightPos", lights[i].getpos());
 
-            for (auto &entity : entities) {
-                if (entity.mesh->draw) {
-                    entity.vao.Bind();
-                    shader.SetUniform<glm::mat4 *>("model", &entity.mesh->matModel);
-                    glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
-                }
+            for (auto n : currentScene->nodes) {
+                recurseDrawModel(n.second, &shader);
             }
+
             shadowTransforms.clear();
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, winWIDTH, winHEIGHT);
+    }
+
+    float left = 0, right = 100, top = 0, bottom = 500;
+    float bias = 0.0001;
+    void recurseDraw(node *n, const glm::mat4 &viewProj, Shader *shader = nullptr, glm::mat4 model = glm::mat4(1)) {
+        model = model * n->matModel;
+        if (shader == nullptr) {
+            shader = &shadersLoaded[n->shaderName];
+            if (n->shaderName == "cube_final2") {
+                shader->Bind();
+                shader->SetUniform<float>("bias", bias);
+
+                shader->SetUniform<const glm::mat4 &>("viewProj", viewProj);
+                shader->SetUniform<int>("enable_normals", enable_normals);
+
+                shader->SetUniform<vec3>("camPos", currentScene->cam.Camera_Position);
+                shader->SetUniform<vec3>("ambientLight", currentScene->ambientLight);
+                shader->SetUniform<float>("ambientStrength", currentScene->ambientStrength);
+
+                shader->SetUniform<vec3>("dirLight.direction", currentScene->dir_light.direction);
+                shader->SetUniform<float>("dirLight.intensity", currentScene->dir_light.intensity);
+                shader->SetUniform<vec3>("dirLight.color", currentScene->dir_light.color);
+
+                shader->SetUniform<int>("activePointLights", currentScene->pointLights.size());
+
+                std::string lightString = "pointLights[";
+                int i = 0;
+                for (auto &light : currentScene->pointLights) {
+                    lightString += std::to_string(i);
+                    lightString.append("].");
+                    auto place = lightString.find_first_of(".") + 1;
+                    lightString.append("position");
+                    shader->SetUniform<vec3>(lightString.c_str(), light.getpos());
+                    lightString.erase(place);
+                    lightString.append("intensity");
+                    shader->SetUniform<float>(lightString.c_str(), light.intensity);
+                    lightString.erase(place);
+                    lightString.append("diffuseColor");
+                    shader->SetUniform<vec3>(lightString.c_str(), light.get_diffuse_color());
+                    lightString.erase(place);
+                    lightString.append("ambientColor");
+                    shader->SetUniform<vec3>(lightString.c_str(), light.get_ambient_color());
+                    lightString.erase(place);
+                    lightString.append("constant");
+                    shader->SetUniform<float>(lightString.c_str(), light.constant);
+                    lightString.erase(place);
+                    lightString.append("linear");
+                    shader->SetUniform<float>(lightString.c_str(), light.linear);
+                    lightString.erase(place);
+                    lightString.append("quadratic");
+                    shader->SetUniform<float>(lightString.c_str(), light.quadratic);
+                    lightString.erase(place);
+                    lightString.append("radius");
+                    shader->SetUniform<float>(lightString.c_str(), light.radius);
+                    //hardcoded 5 for now because we know there are 4 maps and it starts from 1
+                    glActiveTexture(GL_TEXTURE0 + 5 + i);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap_pointlight[i]);
+                    lightString.erase(place);
+                    lightString.append("depthMap");
+                    shader->SetUniform<int>(lightString.c_str(), 5 + i);
+                    lightString.erase(place - 3);
+                    i++;
+                }
+
+                shader->SetUniform<float>("shadow_farplane", shadow_farplane);
+                shader->SetUniform<int>("enable_shadows", enable_shadows);
+            }
+        }
+
+        for (auto m : n->meshes) {
+            shader->Bind();
+            shader->SetUniform<const glm::mat4 &>("model", model * m->matModel);
+            if (shader->name == "cube_final2") {
+                uint32_t sampler_counter = 1;
+                shader->SetUniform<float>("material.shininess", m->material.shininess);
+                shader->SetUniform<vec3>("material.specularColor", m->material.specularColor);
+                shader->SetUniform<vec3>("material.diffuseColor", m->material.diffuseColor);
+                shader->SetUniform<float>("material.ambientStrength", m->material.AmbientStrength);
+                shader->SetUniform<float>("material.diffuseStrength", m->material.DiffuseStrength);
+                shader->SetUniform<float>("material.specularStrength", m->material.SpecularStrength);
+                m->gpuInstance->ambient->Bind(sampler_counter);
+                shader->SetUniform<int>("material.ambientMap", sampler_counter++);
+                m->gpuInstance->diffuse->Bind(sampler_counter);
+                shader->SetUniform<int>("material.diffuseMap", sampler_counter++);
+                m->gpuInstance->specular->Bind(sampler_counter);
+                shader->SetUniform<int>("material.specularMap", sampler_counter++);
+                m->gpuInstance->normal->Bind(sampler_counter);
+                shader->SetUniform<int>("material.normalMap", sampler_counter++);
+                shader->SetUniform<int>("doLightCalculations", m->doLightCalculations);
+                m->gpuInstance->vao.Bind();
+                glDrawElements(GL_TRIANGLES, m->gpuInstance->ibo.m_count, GL_UNSIGNED_INT, nullptr);
+            }
+        }
+        for (auto &i : n->children) {
+            recurseDraw(i.second, viewProj, shader, model);
+        }
     }
 
     void Draw() {
@@ -178,106 +286,15 @@ class renderer {
         auto view = glm::lookAt(currentScene->cam.Camera_Position, currentScene->cam.Camera_Position + currentScene->cam.Camera_Facing_Direction * currentScene->cam.Camera_Target_distance, currentScene->cam.Camera_Up);
 
         auto projpersp = glm::perspective(glm::radians(currentScene->cam.FOV), aspect_ratio, currentScene->cam.nearPoint, currentScene->cam.farPoint);
+        // auto projpersp = glm::ortho(left, -left, top, -top, currentScene->cam.nearPoint, currentScene->cam.farPoint);
         auto viewProj = projpersp * view;
-        Shader *shader;
 
-        for (auto &entity : entities) {
-            if (entity.mesh->draw) {
-
-                shader = entity.shader;
-
-                shader->Bind();
-                shader->SetUniform<glm::mat4 *>("model", &entity.mesh->matModel);
-                shader->SetUniform<glm::mat4 *>("viewProj", &viewProj);
-
-                if (entity.mesh->shader == "cube_final2") {
-                    shader->SetUniform<int>("enable_normals", enable_normals);
-
-                    shader->SetUniform<vec3>("camPos", currentScene->cam.Camera_Position);
-                    shader->SetUniform<vec3>("ambientLight", currentScene->ambientLight);
-                    shader->SetUniform<float>("ambientStrength", currentScene->ambientStrength);
-                    uint32_t sampler_counter = 1;
-
-                    shader->SetUniform<float>("material.shininess", entity.mesh->material.shininess);
-                    shader->SetUniform<vec3>("material.specularColor", entity.mesh->material.specularColor);
-                    shader->SetUniform<vec3>("material.diffuseColor", entity.mesh->material.diffuseColor);
-                    shader->SetUniform<float>("material.ambientStrength", entity.mesh->material.AmbientStrength);
-                    shader->SetUniform<float>("material.diffuseStrength", entity.mesh->material.DiffuseStrength);
-                    shader->SetUniform<float>("material.specularStrength", entity.mesh->material.SpecularStrength);
-                    entity.ambient->Bind(sampler_counter);
-                    shader->SetUniform<int>("material.ambientMap", sampler_counter++);
-                    entity.diffuse->Bind(sampler_counter);
-                    shader->SetUniform<int>("material.diffuseMap", sampler_counter++);
-                    entity.specular->Bind(sampler_counter);
-                    shader->SetUniform<int>("material.specularMap", sampler_counter++);
-                    entity.normal->Bind(sampler_counter);
-                    shader->SetUniform<int>("material.normalMap", sampler_counter++);
-
-                    shader->SetUniform<vec3>("dirLight.direction", currentScene->dir_light.direction);
-                    shader->SetUniform<vec3>("dirLight.color", currentScene->dir_light.color);
-                    shader->SetUniform<float>("dirLight.intensity", currentScene->dir_light.intensity);
-
-                    shader->SetUniform<int>("doLightCalculations", entity.mesh->doLightCalculations);
-                    if (entity.mesh->doLightCalculations) {
-                        // shader->SetUniform<vec3>("dirLight.direction", currentScene->dirLights[0].direction);
-                        // shader->SetUniform<float>("dirLight.intensity", currentScene->dirLights[0].intensity);
-                        // shader->SetUniform<vec3>("dirLight.color", currentScene->dirLights[0].color);
-
-                        shader->SetUniform<int>("activePointLights", currentScene->pointLights.size());
-
-                        std::string lightString = "pointLights[";
-                        int i = 0;
-
-                        for (auto &light : currentScene->pointLights) {
-                            lightString += std::to_string(i);
-                            lightString.append("].");
-                            auto place = lightString.find_first_of(".") + 1;
-                            lightString.append("position");
-                            shader->SetUniform<vec3>(lightString.c_str(), light.getpos());
-                            lightString.erase(place);
-                            lightString.append("intensity");
-                            shader->SetUniform<float>(lightString.c_str(), light.intensity);
-                            lightString.erase(place);
-                            lightString.append("diffuseColor");
-                            shader->SetUniform<vec3>(lightString.c_str(), light.get_diffuse_color());
-                            lightString.erase(place);
-                            lightString.append("ambientColor");
-                            shader->SetUniform<vec3>(lightString.c_str(), light.get_ambient_color());
-                            lightString.erase(place);
-                            lightString.append("constant");
-                            shader->SetUniform<float>(lightString.c_str(), light.constant);
-                            lightString.erase(place);
-                            lightString.append("linear");
-                            shader->SetUniform<float>(lightString.c_str(), light.linear);
-                            lightString.erase(place);
-                            lightString.append("quadratic");
-                            shader->SetUniform<float>(lightString.c_str(), light.quadratic);
-                            lightString.erase(place);
-                            lightString.append("radius");
-                            shader->SetUniform<float>(lightString.c_str(), light.radius);
-                            lightString.erase(place);
-                            lightString.append("dropoffRadius");
-                            shader->SetUniform<float>(lightString.c_str(), light.dropoffRadius);
-
-                            glActiveTexture(GL_TEXTURE0 + sampler_counter);
-                            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap_pointlight[i]);
-                            lightString.erase(place);
-                            lightString.append("depthMap");
-                            shader->SetUniform<int>(lightString.c_str(), sampler_counter++);
-                            lightString.erase(place - 3);
-                            i++;
-                        }
-
-                        shader->SetUniform<float>("shadow_farplane", shadow_farplane);
-                        shader->SetUniform<int>("enable_shadows", enable_shadows);
-                    }
-                    entity.vao.Bind();
-                    glDrawElements(GL_TRIANGLES, entity.ibo.m_count, GL_UNSIGNED_INT, nullptr);
-                }
-            }
+        for (auto n : currentScene->nodes) {
+            recurseDraw(n.second, viewProj);
         }
+
         if (skybox) {
-            skybox->draw(&shadersLoaded["skybox"], view, projpersp);
+            skybox->draw(&shadersLoaded["skybox"], view, glm::perspective(glm::radians(currentScene->cam.FOV), aspect_ratio, currentScene->cam.nearPoint, currentScene->cam.farPoint));
         }
     }
 

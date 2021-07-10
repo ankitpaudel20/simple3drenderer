@@ -23,9 +23,8 @@ struct drawable {
     std::vector<uint32_t> m_indices;
     uint32_t m_primitve = GL_TRIANGLES;
     Material material;
-    std::string shader;
+    std::string shaderName;
     entity *gpuInstance = nullptr;
-    uint32_t entity_index;
     bool doLightCalculations = true;
     std::string name;
     bool draw = true;
@@ -56,14 +55,12 @@ struct drawable {
     glm::mat4 getTranslation() { return translation; }
 
     void setScale(const vec3 &scale) {
-
         scaling = glm::scale(glm::mat4(1.0), (glm::vec3)scale);
         refreshModel();
     }
 
-    void setRotation(const vec3 &rotate) {
-
-        rotation = {glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.0), glm::radians(rotate.z), glm::vec3(0.0f, 0.0f, 1.0f)), glm::radians(rotate.y), glm::vec3(0.0f, 1.0f, 0.0f)), glm::radians(rotate.x), glm::vec3(1.0f, 0.0f, 0.0f))};
+    void setRotation(float angle, const vec3 &axis) {
+        rotation = glm::rotate(rotation, glm::radians(angle), (glm::vec3)axis);
         refreshModel();
     }
 

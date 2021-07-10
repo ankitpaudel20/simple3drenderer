@@ -34,6 +34,7 @@ struct scene {
         //        nodes.emplace_back(node());
     }
 
+#ifdef USEASSIMP
     node *loadModel(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
         if (nodes.find(name) != nodes.end()) {
             return nodes[name];
@@ -41,6 +42,7 @@ struct scene {
         nodes[name] = Model::loadModel(modelPath, shaderName, name, flipUV);
         return nodes[name];
     }
+#endif
 
     node *loadModel_obj(const std::string &modelPath, const std::string &shaderName, const std::string &name, bool flipUV = false) {
         if (nodes.find(name) != nodes.end()) {
@@ -50,7 +52,7 @@ struct scene {
         return nodes[name];
     }
 
-    node *getModel(const std::string &name) {
+    node *getNode(const std::string &name) {
         if (nodes.find(name) != nodes.end())
             return nodes[name];
 
@@ -68,10 +70,10 @@ struct scene {
             return nullptr;
 
         if (parent->children.find(name) != parent->children.end())
-            return &parent->children[name];
+            return parent->children[name];
 
         for (auto &node : parent->children)
-            return searchNode(&node.second, name);
+            return searchNode(node.second, name);
 
         return nullptr;
     }

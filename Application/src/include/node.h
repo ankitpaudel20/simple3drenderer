@@ -3,44 +3,34 @@
 struct node {
     //node* children=nullptr;
     //uint32_t nosChildren=0;
-    std::map<std::string, node> children;
+    std::map<std::string, node *> children;
     std::vector<drawable<Vertex> *> meshes;
     glm::mat4 matModel = glm::mat4(1.0);
+    std::string shaderName;
 
     void delpos(const vec3 &delta) {
-
-        for (auto &mesh : meshes)
-            mesh->delpos(delta);
-
-        for (auto &child : children)
-            child.second.delpos(delta);
+        translation = glm::translate(translation, (glm::vec3)(delta));
+        refreshModel();
     }
 
     void setpos(const vec3 &position) {
-        auto unit = glm::mat4();
-        for (auto &mesh : meshes)
-            mesh->setpos(position);
-
-        for (auto &child : children)
-            child.second.setpos(position);
+        translation = glm::translate(glm::mat4(1), (glm::vec3)(position));
+        refreshModel();
     }
 
     void setScale(const vec3 &scale) {
-
-        for (auto &mesh : meshes)
-            mesh->setScale(scale);
-
-        for (auto &child : children)
-            child.second.setScale(scale);
+        scaling = glm::scale(scaling, (glm::vec3)(scale));
+        refreshModel();
     }
 
-    void setRotation(const vec3 &rotate) {
+    void setRotation(float angle, const vec3 &axis) {
+        rotation = glm::rotate(rotation, glm::radians(angle), (glm::vec3)axis);
+        refreshModel();
+    }
 
-        for (auto &mesh : meshes)
-            mesh->setRotation(rotate);
-
-        for (auto &child : children)
-            child.second.setRotation(rotate);
+    const glm::mat4 &refreshModel() {
+        matModel = translation * rotation * scaling;
+        return matModel;
     }
 
   private:

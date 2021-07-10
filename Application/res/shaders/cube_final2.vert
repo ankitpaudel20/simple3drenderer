@@ -29,8 +29,7 @@ struct pointLight {
     vec3 diffuseColor;
     vec3 ambientColor;
 
-float radius;
-    float dropoffRadius;
+    float radius;
     float constant;
     float linear;
     float quadratic;
@@ -39,36 +38,32 @@ float radius;
 uniform int activePointLights;
 uniform pointLight pointLights[5];
 
-out float debug;
+flat out float debug;
 
 //---------------------------
 
 void main() {
     vec4 pos = viewProj * model * v_position;
     gl_Position = pos;
-    debug=pos.y;
+    debug=pos.x;
+    mat3 normalMatrix = transpose(inverse(mat3(model)));
 
     //----
-    mat3 normalMatrix = transpose(inverse(mat3(model)));
     vec3 T = normalize(normalMatrix * v_tangent);
     vec3 N = normalize(normalMatrix * v_normal);
     T = normalize(T - dot(T, N) * N);
     vec3 B = cross(N, T);
-
     mat3 TBN = transpose(mat3(T, B, N));
-
     // -------
 
     f_position = (model * v_position).xyz;
     f_normal = normalMatrix * v_normal;
     f_texCoord = v_texCoord;
-    // f_tangent = v_tangent;
-    // f_bitangent = v_bitangent;
 
     // ----------
     // first light only for now
-    for (int i=0;i<activePointLights;i++){
-    tangentLightPos = TBN * pointLights[i].position;
+    for (int i=0; i<activePointLights; i++){
+            tangentLightPos = TBN * pointLights[i].position;
     }
     tangentViewPos = TBN * camPos;
     tangentFragPos = TBN * f_position;

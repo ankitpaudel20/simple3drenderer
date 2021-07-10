@@ -20,7 +20,6 @@ struct pointLight {
     vec3 ambientColor;
 
     float radius;
-    float dropoffRadius;
 
     float constant;
     float linear;
@@ -56,8 +55,6 @@ struct flashLight {
 in vec3 f_position;
 in vec3 f_normal;
 in vec2 f_texCoord;
-// in vec3 f_tangent;
-// in vec3 f_bitangent;
 in vec3 tangentLightPos;
 in vec3 tangentViewPos;
 in vec3 tangentFragPos;
@@ -76,24 +73,22 @@ uniform float shadow_farplane;
 uniform bool enable_shadows;
 uniform bool enable_normals;
 uniform mat4 viewProj;
+uniform float bias1;
 
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 diffuseColor);
 vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor, vec3 tangentLightPos, vec3 tangentFragPos,float int_by_at);
 vec3 CalcPointLight2(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffuseColor);
 
-in float debug;
+flat in float debug;
 
 bool has_normal;
 void main() {
     vec3 norm;
     has_normal = texture(material.normalMap, f_texCoord).rgb == vec3(0) ? false : true;
-
-    if (enable_normals && has_normal) {
-        norm = texture(material.normalMap, f_texCoord).rgb;
-        norm = normalize(norm * 2.0 - 1.0);
-    } else
-        norm = normalize(f_normal);
+    norm=(enable_normals && has_normal) ? texture(material.normalMap, f_texCoord).rgb * 2.0 - 1.0 : f_normal;
+    norm=normalize(norm);
+ 
 
     vec3 diffColor = material.diffuseColor;
     vec3 tex = vec3(texture(material.diffuseMap, f_texCoord));
@@ -112,19 +107,18 @@ void main() {
     }
 
     if (doLightCalculations == 1) {
-        for (int i = 0; i < activePointLights; i++) {            
-            float dist=distance(f_position,pointLights[i].position);     
-            float int_by_at =pointLights[i].intensity/ (pointLights[i].constant + pointLights[i].linear * dist + pointLights[i].quadratic * (dist * dist));    
-            if (int_by_at > 0.004){              
-                result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor, tangentLightPos, tangentFragPos, int_by_at);
-            }
-        }
-        //result+=CalcDirLight(dirLight,norm,viewDir,diffColor);
-        
+       for (int i = 0; i < activePointLights; i++) {            
+           float dist=distance(f_position,pointLights[i].position);     
+           float int_by_at =pointLights[i].intensity/ (pointLights[i].constant + pointLights[i].linear * dist + pointLights[i].quadratic * (dist * dist));    
+           if (int_by_at > 0.004){              
+               result += CalcPointLight(pointLights[i], norm, f_position, viewDir, diffColor, tangentLightPos, tangentFragPos, int_by_at);
+           }
+       }
+       result+=CalcDirLight(dirLight,norm,viewDir,diffColor);       
     } else
-        result += material.diffuseColor;
+        result += diffColor;
 
-        // result+= ambientColor*ambientStrength;
+    result += ambientLight * ambientStrength * diffColor;
     
     // if ((viewProj*vec4(f_position,1)).z<1){
     //     result=vec3(1);
@@ -133,14 +127,10 @@ void main() {
     //     result=vec3(0);
     // }
 
-    final_color = vec4(result, 1);
-    float a=1;
-   float b=(1/(2*a))*(debug+a);
-    
-    // final_color = vec4(vec3(b), 1);
+    final_color = vec4(result,1);    
 }
 
-float ShadowCalculation(vec3 fragPos, pointLight light) {
+float ShadowCalculation(vec3 fragPos, pointLight light, vec3 normal, vec3 lightDir) {
     // get vector between fragment position and light position
 
     vec3 fragToLight = fragPos - light.position;
@@ -154,7 +144,10 @@ float ShadowCalculation(vec3 fragPos, pointLight light) {
     // now get current linear depth as the length between the fragment and light position
     float currentDepth = length(fragToLight);
     // test for shadows
-    float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
+    // float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
+    // float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
+    float bias = dot(normal, lightDir)*0.1;  
+
     float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
     // display closestDepth as debug (to visualize depth cubemap)
     // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
@@ -190,7 +183,7 @@ vec3 CalcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
     vec3 specular = int_by_at * light.diffuseColor * material.specularStrength * spec * material.specularColor * specularColor;
    
     if (enable_shadows) {
-        float shadow = ShadowCalculation(fragPos, light);
+        float shadow = ShadowCalculation(fragPos, light, normal, lightDir);
         return (ambient + (1.0 - shadow) * (diffuse + specular));
     } else
         return (ambient + diffuse + specular);   

@@ -2,9 +2,9 @@
 #pragma once
 
 #ifdef USEASSIMP
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
+#include "assimp/Importer.hpp"
+#include "assimp/postprocess.h"
+#include "assimp/scene.h"
 #endif
 
 #include "tinyobj/tiny_obj_loader.h"
@@ -120,12 +120,6 @@ static drawable<Vertex> *processMesh(aiMesh *mesh, const aiScene *scene) {
     }
     // process materials
     aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-    // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-    // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER.
-    // Same applies to other texture as the following list summarizes:
-    // diffuse: texture_diffuseN
-    // specular: texture_specularN
-    // normal: texture_normalN
 
     // 0. ambient maps
     std::string ambientMaps = loadMaterialTexture(material, aiTextureType_AMBIENT, "texture_ambient");
@@ -192,7 +186,7 @@ node *loadModel(std::string const &path, const std::string &shaderName, const st
             temp_mesh.m_vertices = m->m_vertices;
             temp_mesh.m_indices = m->m_indices;
             temp_mesh.material = m->material;
-            temp_mesh.shader = shaderName;
+            temp_mesh.shaderName = shaderName;
             auto name = m->name + "_copy";
             while (meshes_loaded.find(name) != meshes_loaded.end())
                 name += "_copy";
@@ -201,7 +195,7 @@ node *loadModel(std::string const &path, const std::string &shaderName, const st
             meshes_loaded[temp_mesh.name] = std::move(temp_mesh);
             temp.meshes.push_back(&meshes_loaded[name]);
         }
-
+        temp.shaderName = shaderName;
         models_loaded[name] = std::move(temp);
         return &models_loaded[name];
     }
@@ -233,9 +227,10 @@ node *loadModel(std::string const &path, const std::string &shaderName, const st
     processNode(scene->mRootNode, scene, temp.meshes, 0);
 
     for (auto &i : temp.meshes) {
-        i->shader = shaderName;
+        i->shaderName = shaderName;
     }
 
+    temp.shaderName = shaderName;
     models_loaded[name] = std::move(temp);
     models_loaded_path[path] = &models_loaded[name];
     return &models_loaded[name];
@@ -317,7 +312,7 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
 
     if (models_loaded_path.find(path) != models_loaded_path.end()) {
         if (models_loaded_path[path] == &models_loaded[name]) {
-            std::cout << "already loaded same module with same name and path os returning refrence to previous obj\n";
+            std::cout << "already loaded same model with same name and path so returning refrence to previous model\n";
             DEBUG_BREAK;
         }
         auto previous_node = *models_loaded_path[path];
@@ -327,7 +322,7 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
             temp_mesh.m_vertices = m->m_vertices;
             temp_mesh.m_indices = m->m_indices;
             temp_mesh.material = m->material;
-            temp_mesh.shader = shaderName;
+            temp_mesh.shaderName = shaderName;
             auto name = m->name + "_copy";
             while (meshes_loaded.find(name) != meshes_loaded.end())
                 name += "_copy";
@@ -336,6 +331,7 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
             meshes_loaded[temp_mesh.name] = std::move(temp_mesh);
             temp.meshes.push_back(&meshes_loaded[name]);
         }
+        temp.shaderName = shaderName;
 
         models_loaded[name] = std::move(temp);
         return &models_loaded[name];
@@ -383,13 +379,6 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
         auto name = shapes[s].name;
         Mesh *m1 = new Mesh();
         bool loaded = false;
-
-        //std::string material_name;
-        //Material current_material;
-
-        /* std::vector<Vertex> vertices;
-        std::vector<unsigned int> indices;
-        std::vector<std::string> textures;*/
 
         size_t index_offset = 0;
         uint32_t current_index = 0;
@@ -464,11 +453,6 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
                 Vertex vertex;
                 vertex.position = vec3(attrib.vertices[3 * size_t(idx.vertex_index) + 0], attrib.vertices[3 * size_t(idx.vertex_index) + 1], attrib.vertices[3 * size_t(idx.vertex_index) + 2]);
 
-                //     // access to vertex
-                // tinyobj::real_t vx = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
-                // tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
-                // tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
-
                 // Check if `normal_index` is zero or positive. negative = no normal data
                 if (idx.normal_index >= 0) {
                     vertex.normal = vec3(attrib.normals[3 * size_t(idx.normal_index) + 0], attrib.normals[3 * size_t(idx.normal_index) + 1], attrib.normals[3 * size_t(idx.normal_index) + 2]);
@@ -509,8 +493,9 @@ node *loadModel_obj(std::string const &path, const std::string &shaderName, cons
     }
 
     for (auto &i : temp.meshes) {
-        i->shader = shaderName;
+        i->shaderName = shaderName;
     }
+    temp.shaderName = shaderName;
 
     models_loaded[name] = std::move(temp);
     models_loaded_path[path] = &models_loaded[name];

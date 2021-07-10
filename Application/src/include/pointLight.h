@@ -7,17 +7,9 @@ struct pointLight {
     vec3 ambientColor = vec3(1);
     node *model = nullptr;
 
-    inline void refreshModelMatrix() {
-        for (auto &mesh : model->meshes) {
-            // auto iden = glm::mat4(1);
-            mesh->setpos(position);
-        }
-    }
-
   public:
     float intensity;
     float radius = 11;
-    float dropoffRadius = 1;
 
     // float constant = 1;
     // float linear = 0.09;
@@ -26,29 +18,25 @@ struct pointLight {
     float linear = 1.0;
     float quadratic = 0.06;
 
-    pointLight(const vec3 &pos, const float &intensity, const vec3 &diffcol = vec3(1)) : position(pos), diffuseColor(diffcol), intensity(intensity) {}
+    pointLight(const vec3 &pos, const float &intensity, const vec3 &diffcol = vec3(1)) : position(pos), diffuseColor(diffcol), intensity(intensity), ambientColor(diffcol) {}
 
     void delpos(const vec3 &delta) {
         position += delta;
         if (model) {
-            refreshModelMatrix();
+            model->delpos(delta);
         }
     }
 
     void setpos(const vec3 &newPos) {
         position = newPos;
         if (model) {
-            refreshModelMatrix();
+            model->setpos(newPos);
         }
     }
 
     void setmodel(node *model) {
         this->model = model;
-        for (auto mesh : model->meshes) {
-            mesh->material.diffuseColor = diffuseColor;
-        }
-
-        refreshModelMatrix();
+        this->model->setpos(position);
     }
 
     void setdiffColor(const vec3 &color) {

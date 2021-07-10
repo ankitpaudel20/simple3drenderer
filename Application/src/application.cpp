@@ -106,35 +106,33 @@ int main(int argc, char *argv[]) {
 
         scene mainScene;
         glfwSetWindowUserPointer(mainWin, &mainScene);
+
         mainScene.pointLights.emplace_back(vec3(1), 5);
-        // mainScene.pointLights.emplace_back(vec3(1, 0, 0), 1);
-        // mainScene.pointLights[1].setColor(vec3(1, 0, 0));
-        // mainScene.pointLights.emplace_back(vec3(0, 0, 1), 1);
-        // mainScene.pointLights[1].setColor(vec3(0, 0, 1));
+        mainScene.pointLights.emplace_back(vec3(1, 1, 1), 5, vec3(1, 0, 0));
+        mainScene.pointLights.emplace_back(vec3(1, 1, -1), 5, vec3(0, 1, 0));
         std::vector<node *> lightmodels;
         lightmodels.push_back(mainScene.loadModel_obj(resPath + "/3dModels/sphere.obj", "cube_final2", "light"));
-        // lightmodels.push_back(mainScene.loadModel_obj(resPath + "/3dModels/sphere.obj", "cube_final2", "light2"));
-        // lightmodels.push_back(mainScene.loadModel_obj(resPath + "/3dModels/sphere.obj", "cube_final2", "light3"));
+        lightmodels.push_back(mainScene.loadModel_obj(resPath + "/3dModels/sphere.obj", "cube_final2", "light1"));
+        lightmodels.push_back(mainScene.loadModel_obj(resPath + "/3dModels/sphere.obj", "cube_final2", "light2"));
         for (auto &mesh : lightmodels) {
             mesh->setScale(vec3(0.1));
             for (auto &m : mesh->meshes) {
                 m->doLightCalculations = false;
             }
         }
-        mainScene.pointLights[0].setmodel(lightmodels[0]);
-        // mainScene.pointLights[1].setmodel(lightmodels[1]);
-        // mainScene.pointLights[2].setmodel(lightmodels[2]);
+        for (int i = 0; i < mainScene.pointLights.size(); i++) {
+            mainScene.pointLights[i].setmodel(lightmodels[i]);
+        }
 
         mainScene.dir_light.direction = vec3(0.5, -1, 0.5);
 
-        mainScene.pointLights[0].setpos(vec3(0, 10, 0));
         mainScene.cam.Camera_Position = glm::vec3(10, 10, 10);
         mainScene.cam.DelYaw(45);
         mainScene.cam.DelPitch(-30);
 
         mainScene.skybox = resPath + "/skybox";
 
-        auto cyborg1 = mainScene.loadModel_obj(resPath + "/3dModels/cyborg/cyborg1.obj", "cube_final2", "cyborg1");
+        // auto cyborg1 = mainScene.loadModel_obj(resPath + "/3dModels/cyborg/cyborg1.obj", "cube_final2", "cyborg1");
         // auto nanosuit = mainScene.loadModel(resPath + "/3dModels/nanosuit/nanosuit.obj", "cube_final2", "nanosuit", true);
         // auto nanosuit1 = mainScene.loadModel_obj(resPath + "/3dModels/nanosuit/nanosuit1.obj", "cube_final2", "nanosuit1", true);
         // auto hammer = mainScene.loadModel_obj(resPath + "/3dModels/hammer/hammer.obj", "cube_final2", "hammer", true);
@@ -142,25 +140,25 @@ int main(int argc, char *argv[]) {
         // hammer->delpos(vec3(0, 5, -3));
         // hammer->setScale(vec3(0.5));
 
-        cyborg1->setScale(vec3(3));
+        // cyborg1->setScale(vec3(3));
         // nanosuit->setScale(vec3(0.9));
         // cyborg->delpos(vec3(-3, 1, 0));
 
         auto colorCube = mainScene.loadModel_obj(resPath + "/3dModels/color/testColored.obj", "cube_final2", "color");
-        colorCube->delpos(vec3(3, 0, 3));
+        colorCube->delpos(vec3(3, 3, 3));
         // colorCube2->delpos(vec3(5, 3, 3));
         // auto trans = mainScene.loadModel_obj(resPath + "/3dModels/transparency/transparent.obj", "cube_final2", "trans");
         // auto gallery = mainScene.loadModel_obj(resPath + "/3dModels/gallery/gallery.obj", "cube_final2", "gallery");
         // auto pine = mainScene.loadModel_obj(resPath + "/3dModels/pine/scrubPine.obj", "cube_final2", "pineTree");
         // pine->setScale(vec3(0.01));
-        // auto rungholt = mainScene.loadModel_obj(resPath + "/3dModels/rungholt/rungholt.obj", "cube_final2", "rungholt");
+        //auto rungholt = mainScene.loadModel_obj(resPath + "/3dModels/rungholt/rungholt.obj", "cube_final2", "rungholt");
         // auto house = mainScene.loadModel_obj(resPath + "/3dModels/rungholt/house.obj", "cube_final2", "house");
         //auto bugatti = mainScene.loadModel_obj(resPath + "/3dModels/bugatti/bugatti.obj", "cube_final2", "bugatti");
         // auto l = mainScene.loadModel_obj(resPath + "/3dModels/box.obj", "cube_final2", "light");
         // l->delpos(3);
         // auto tree = mainScene.loadModel_obj(resPath + "/3dModels/tree/Tree1.obj", "cube_final2", "tree");
-        // auto sponza = mainScene.loadModel_obj(resPath + "/3dModels/sponza/sponza.obj", "cube_final2", "sponza");
-        // sponza->setScale(0.03);
+        auto sponza = mainScene.loadModel_obj(resPath + "/3dModels/sponza/sponza.obj", "cube_final2", "sponza");
+        sponza->setScale(vec3(0.03));
         // auto plane = mainScene.loadModel_obj(resPath + "/3dModels/plane.obj", "cube_final2", "plane");
 
         renderer mainRend;
@@ -244,8 +242,16 @@ int main(int argc, char *argv[]) {
 
                 {
                     ImGui::Begin("Controls");
-                    ImGui::Checkbox("render deth: ", &mainRend.enable_shadows);
+                    ImGui::Checkbox("render depth: ", &mainRend.enable_shadows);
                     ImGui::Checkbox("enable normals", &mainRend.enable_normals);
+                    ImGui::SliderFloat("shadow bias", &mainRend.bias, 0.00001f, 1.0f);
+
+                    // ImGui::DragFloat("camera left", &mainRend.left, 0.1);
+                    // ImGui::DragFloat("camera right", &mainRend.right, 0.1);
+                    // ImGui::DragFloat("camera top", &mainRend.top, 0.1);
+                    // ImGui::DragFloat("camera bottom", &mainRend.bottom, 0.1);
+                    // ImGui::DragFloat("camera near", &mainScene.cam.nearPoint, 0.1);
+                    // ImGui::DragFloat("camera far", &mainScene.cam.farPoint, 0.1);
 
                     ImGui::Combo("pointlights", &selected_light, &pointlightChar[0], pointlightChar.size());
 
@@ -257,6 +263,7 @@ int main(int argc, char *argv[]) {
                     // ImGui::SliderFloat3("color", &lightColor.x, 0.0f, 1.0f);
                     // ImGui::SliderFloat("near point", &near_point, 0.0f, 5.0f);
                     ImGui::SliderFloat3("ambientLight color", &mainScene.ambientLight.x, 0.0f, 1.0f);
+                    ImGui::SliderFloat("ambientLight intensity", &mainScene.ambientStrength, 0.0f, 1.0f);
                     ImGui::SliderFloat("directional intensity", &mainScene.dir_light.intensity, 0.f, 50.f);
 
                     if (ImGui::SliderFloat3("Light Direction", &mainScene.dir_light.direction.x, -1, +1)) {
@@ -271,7 +278,6 @@ int main(int argc, char *argv[]) {
 
                     ImGui::SliderFloat("pointLight intensity", &mainScene.pointLights[selected_light].intensity, 0.f, 50.f);
                     ImGui::SliderFloat("pointLight radius", &mainScene.pointLights[selected_light].radius, 0.f, 100.f);
-                    ImGui::SliderFloat("pointLight dropoff", &mainScene.pointLights[selected_light].dropoffRadius, 0.f, 2.f);
                     ImGui::SliderFloat("linear term", &mainScene.pointLights[selected_light].linear, 0.001f, 0.7f);
                     ImGui::SliderFloat("quadratic term", &mainScene.pointLights[selected_light].quadratic, 0.000007f, 0.5f);
 
@@ -279,30 +285,30 @@ int main(int argc, char *argv[]) {
                                 mainScene.pointLights[selected_light].getpos().x,
                                 mainScene.pointLights[selected_light].getpos().y,
                                 mainScene.pointLights[selected_light].getpos().z);
+
                     // ImGui::SliderFloat3("rotate", &light.direction.x, 0.0f, 1.0f);
                     // ImGui::SliderFloat3("Specular Reflectivity", &material.specular.x,0.0f, 1.0f);
                     //ImGui::SliderFloat3("direction light direction", &mainScene.dirLights[0].direction.x, -1.f, 1.f);
                     //ImGui::SliderFloat("direction light intensity", &mainScene.dirLights[0].intensity, 0.f, 1.f);
 
-                    ImGui::SliderFloat("Shineness", &newshininess, 0.0f, 512.0f);
-                    ImGui::SliderFloat("ambientStrength", &newamb, 0.0f, 1.f);
-                    ImGui::SliderFloat("diffuseStrength", &newdiff, 0.0f, 1.f);
+                    // ImGui::SliderFloat("Shineness", &newshininess, 0.0f, 512.0f);
+                    // ImGui::SliderFloat("ambientStrength", &newamb, 0.0f, 1.f);
+                    // ImGui::SliderFloat("diffuseStrength", &newdiff, 0.0f, 1.f);
 
-                    if (newshininess != shininess || newamb != amb || newdiff != diff) {
-                        shininess = newshininess;
-                        amb = newamb;
-                        diff = newdiff;
-                        // for (auto &mesh : nanosuit->meshes) {
-                        //     mesh.material.shininess = newshininess;
-                        //     mesh.material.AmbientStrength = newamb;
-                        //     mesh.material.DiffuseStrength = newdiff;
-                        // }
-                    }
+                    // if (newshininess != shininess || newamb != amb || newdiff != diff) {
+                    //     shininess = newshininess;
+                    //     amb = newamb;
+                    //     diff = newdiff;
+                    //     // for (auto &mesh : nanosuit->meshes) {
+                    //     //     mesh.material.shininess = newshininess;
+                    //     //     mesh.material.AmbientStrength = newamb;
+                    //     //     mesh.material.DiffuseStrength = newdiff;
+                    //     // }
+                    // }
 
                     ImGui ::SliderFloat("far point", &far_point, 0.0f, 200.0f);
                     ImGui::SliderFloat("POV", &mainScene.cam.FOV, 0.0f, 180.0f);
-                    ImGui::SliderFloat("cameraSensitivity", &mainScene.cam.sensitivity,
-                                       0.0f, 3.0f);
+                    ImGui::SliderFloat("cameraSensitivity", &mainScene.cam.sensitivity, 0.0f, 3.0f);
                     ImGui::SliderFloat("camera speed", &mainScene.cam.speed, 0.0f, 50.0f);
                     ImGui::SliderFloat("light Speed", &light_speed, 0.0f, 5.0f);
                     ImGui::End();

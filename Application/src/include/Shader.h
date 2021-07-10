@@ -204,7 +204,36 @@ class Shader {
         }
     }
 
+    void prepare() {
+        if (m_vertex.back() != '\0')
+            m_vertex.push_back('\0');
+        if (m_fragment.back() != '\0')
+            m_fragment.push_back('\0');
+        if (m_path.back() != '\0')
+            m_path.push_back('\0');
+        if (m_vertpath.back() != '\0')
+            m_vertpath.push_back('\0');
+        if (m_fragpath.back() != '\0')
+            m_fragpath.push_back('\0');
+
+        if (!m_geopath.empty()) {
+            if (m_geopath.back() != '\0')
+                m_geopath.push_back('\0');
+            if (m_geometry.back() != '\0')
+                m_geometry.push_back('\0');
+        }
+
+        m_vertex.shrink_to_fit();
+        m_fragment.shrink_to_fit();
+        m_geometry.shrink_to_fit();
+        m_path.shrink_to_fit();
+        m_vertpath.shrink_to_fit();
+        m_fragpath.shrink_to_fit();
+        m_geopath.shrink_to_fit();
+    }
+
   public:
+    std::string name;
     unsigned id = 0;
 
     int GetUniformLocation(const char *name) {
@@ -227,7 +256,7 @@ class Shader {
         printf("default constructor used to make shader \n");
     };
 
-    explicit Shader(const std::string &path, bool different = false) : id(0), m_path(path) {
+    explicit Shader(const std::string &name, const std::string &path, bool different = false) : id(0), m_path(path), name(name) {
         if (!different) {
             setshader(path);
         } else {
@@ -239,11 +268,13 @@ class Shader {
             setshader2(path + ".vert", path + ".frag", geoexists ? path + ".geom" : std::string());
         }
         id = CreateShader();
+        prepare();
     }
 
-    Shader(const std::string &vert, const std::string &frag, const std::string &geo = std::string()) : m_path(vert), id(0) {
+    Shader(const std::string &name, const std::string &vert, const std::string &frag, const std::string &geo = std::string()) : m_path(vert), id(0), name(name) {
         setshader2(vert, frag, geo);
         id = CreateShader();
+        prepare();
     }
 
     Shader(Shader &&in) noexcept {
@@ -255,6 +286,7 @@ class Shader {
         m_path = std::move(in.m_path);
         m_vertpath = std::move(in.m_vertpath);
         m_fragpath = std::move(in.m_fragpath);
+        name = std::move(in.name);
     }
 
     Shader &operator=(Shader &&in) noexcept {
@@ -266,8 +298,32 @@ class Shader {
         m_path = std::move(in.m_path);
         m_vertpath = std::move(in.m_vertpath);
         m_fragpath = std::move(in.m_fragpath);
+        name = std::move(in.name);
         return *this;
     }
+
+    /*Shader &operator=(const Shader &in) noexcept {
+        id = in.id;        
+        const_cast<Shader&>(in).id = 0;
+        m_UniformLocationCache = std::move(in.m_UniformLocationCache);
+        m_vertex = std::move(in.m_vertex);
+        m_fragment = std::move(in.m_fragment);
+        m_path = std::move(in.m_path);
+        m_vertpath = std::move(in.m_vertpath);
+        m_fragpath = std::move(in.m_fragpath);
+        return *this;
+    }
+
+    Shader(const Shader &in) noexcept {
+        id = in.id;
+        const_cast<Shader &>(in).id = 0;
+        m_UniformLocationCache = std::move(in.m_UniformLocationCache);
+        m_vertex = std::move(in.m_vertex);
+        m_fragment = std::move(in.m_fragment);
+        m_path = std::move(in.m_path);
+        m_vertpath = std::move(in.m_vertpath);
+        m_fragpath = std::move(in.m_fragpath);
+    }*/
 
     void free() {
         // std::cout << "shader deleted\n";
@@ -354,8 +410,8 @@ inline void Shader::SetUniform<uint32_t *>(const char *name, uint32_t *value, un
 }
 
 template <>
-inline void Shader::SetUniform<glm::mat4 *>(const char *name, glm::mat4 *value, unsigned count) {
-    glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, &(*value)[0][0]);
+inline void Shader::SetUniform<const glm::mat4 &>(const char *name, const glm::mat4 &value, unsigned count) {
+    glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, &(value)[0][0]);
 }
 
 //template<>
